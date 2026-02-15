@@ -1,0 +1,12 @@
+name: Murder
+version: '1.0'
+main: Aximox.murder.Murder
+api-version: '1.21'
+authors: [ Aximoxx ]
+commands:
+  setrank:
+    description: Défini le status des joueurs.
+  start:
+    description: Démarre la partie
+  stop:
+    description: Termine la partie

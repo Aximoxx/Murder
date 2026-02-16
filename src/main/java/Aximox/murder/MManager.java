@@ -1,10 +1,7 @@
 package Aximox.murder;
 
 import Aximox.murder.grade.RankManager;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
@@ -20,6 +17,7 @@ public class MManager {
     private final List<UUID>pls = new ArrayList<>();
     private final List<UUID>murderP = new ArrayList<>();
     private final List<UUID>innocent = new ArrayList<>();
+    private final List<UUID> detective = new ArrayList<>();
     private final RankManager rankManager = new RankManager();
     private boolean started;
 
@@ -165,18 +163,30 @@ public class MManager {
                 timer--;
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20);
-
-
     }
 
     /**
      *Cette méthode sert à gérer les "kills" fait durant la partie.
      **/
-    public void onKill(Player p){
+    public void onKill(Player p, Player v){
         if (murderP.contains(p.getUniqueId())) {
             lastMurderName = p.getName();
             murderP.remove(p.getUniqueId());
         } else innocent.remove(p.getUniqueId());
+
+        for (UUID id : getPls()){
+            Player pls = Bukkit.getPlayer(id);
+            if (pls == null) continue;
+
+            pls.sendMessage("§c§l━━━━━━━━━━━━⚔━━━━━━━━━━━━");
+            pls.sendMessage( "§e"+ v.getName() + "§6a été attaqué !");
+            pls.sendMessage("§6Il était §e" + getRole(v));
+
+            pls.playSound(pls.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, SoundCategory.BLOCKS, 1f, 1f);
+        }
+
+        p.setGameMode(GameMode.SPECTATOR);
+        p.sendMessage(getMurder() + "§eVous avez éliminé(e) §6" + v.getName());
         checkWin();
     }
 
@@ -248,7 +258,10 @@ public class MManager {
 
             if (role == MRoles.MURDER){
                 murderP.add(joueur);
-            }else {
+            } else if (role == MRoles.DETECTIVE) {
+                detective.add(joueur);
+                innocent.add(joueur);
+            } else {
                 innocent.add(joueur);
             }
 
@@ -260,6 +273,9 @@ public class MManager {
         }
     }
 
+    /**
+     *Cette méthode sert à distribuer les items aux rôles.
+     **/
     public void giveItems(Player p, MRoles role) {
         p.getInventory().clear();
 
@@ -306,12 +322,29 @@ public class MManager {
     }
 
     /**
+     * Cette méthode sert à récupérer le rôle d'un joueur.
+     **/
+    public MRoles getRole(Player p) {
+        UUID playerId = p.getUniqueId();
+
+        if (murderP.contains(playerId)) {
+            return MRoles.MURDER;
+        } else if (detective.contains(playerId)) {
+            return MRoles.DETECTIVE;
+        } else if (innocent.contains(playerId)) {
+            return MRoles.Innocent;
+        }
+        return null;
+    }
+
+    /**
      * Cette méthode sert à remettre le jeu de 0.
      * **/
     public void reset(){
         pls.clear();
         murderP.clear();
         innocent.clear();
+        detective.clear();
         started = false;
         lastMurderName = "§c⚔️ Inconnu";
     }

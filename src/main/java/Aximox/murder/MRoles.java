@@ -5,7 +5,6 @@ public enum MRoles {
     DETECTIVE("§bDetective", "§7Tu est le §bDétective§7 ! Ta mission est de trouver et de tuer le §cMurder§7 !"),
     Innocent("§aInnocent", "§7Tu est §aInnocent§7 ! Survie..");
 
-
     private final String name;
     private final String description;
 

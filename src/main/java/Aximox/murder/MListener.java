@@ -13,7 +13,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 public class MListener implements Listener {
-    private MManager manager;
+    private final MManager manager;
 
     public MListener(MManager manager){
         this.manager = manager;
@@ -76,6 +76,6 @@ public class MListener implements Listener {
         }
 
         e.setCancelled(true);
-        manager.onKill(victim);
+        manager.onKill(attacker, victim);
     }
 }

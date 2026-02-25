@@ -46,6 +46,7 @@ public class MManager {
 
         getPls().add(p.getUniqueId());
 
+        p.getInventory().clear();
         p.sendMessage(getMurder() + "§eÊtes vous prêt à MASTERMINDER tout le monde ?");
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
         //Todo: Le tp à la réu
@@ -135,32 +136,32 @@ public class MManager {
             private int timer = 5;
             @Override
             public void run() {
-                for (UUID id : getPls()){
-                    Player pls = Bukkit.getPlayer(id);
-                    if (pls != null) {
-
-                        if (timer <= 5 && timer >= 1){
-                            pls.sendMessage(getMurder() + "§aLa partie se termineras dans §e" + timer + "§as !");
+                if (timer >= 1) {
+                    for (UUID id : getPls()) {
+                        Player pls = Bukkit.getPlayer(id);
+                        if (pls != null) {
+                            pls.sendMessage(getMurder() + "§aLa partie se terminera dans §e" + timer + "§as !");
                             pls.playSound(pls.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.BLOCKS, 1f, 1f);
                         }
+                    }
+                    timer--;
+                    return;
+                }
 
-                        if (timer == 0){
-                            //Todo: Les tps au lobby
-
-                            //Reset la partie
-                            setStarted(false);
-                            reset();
-
-                            //Remet tous les joueurs dans une autre partie
-                            getPls().clear();
-                            getPls().addAll(savePls);
-
-                            cancel();
-                            return;
-                        }
+                for (UUID id : savePls) {
+                    Player pls = Bukkit.getPlayer(id);
+                    if (pls != null) {
+                        pls.getInventory().clear();
+                        pls.setGameMode(GameMode.SURVIVAL);
+                        pls.teleport(new Location(Bukkit.getWorld("world"), 0, 100, 0));
                     }
                 }
-                timer--;
+
+                reset();
+                cancel();
+                getPls().clear();
+                setStarted(false);
+                getPls().addAll(savePls);
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20);
     }
@@ -169,23 +170,34 @@ public class MManager {
      *Cette méthode sert à gérer les "kills" fait durant la partie.
      **/
     public void onKill(Player p, Player v){
-        if (murderP.contains(p.getUniqueId())) {
-            lastMurderName = p.getName();
-            murderP.remove(p.getUniqueId());
-        } else innocent.remove(p.getUniqueId());
-
         for (UUID id : getPls()){
             Player pls = Bukkit.getPlayer(id);
             if (pls == null) continue;
 
+            pls.sendMessage(" ");
             pls.sendMessage("§c§l━━━━━━━━━━━━⚔━━━━━━━━━━━━");
-            pls.sendMessage( "§e"+ v.getName() + "§6a été attaqué !");
+            pls.sendMessage( "§e"+ v.getName() + " §6a été attaqué(e) !");
             pls.sendMessage("§6Il était §e" + getRole(v));
+            pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━━");
+            pls.sendMessage(" ");
 
             pls.playSound(pls.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, SoundCategory.BLOCKS, 1f, 1f);
         }
 
-        p.setGameMode(GameMode.SPECTATOR);
+        if (v.getInventory().contains(Material.BOW) && v.getInventory().contains(Material.ARROW)){
+            v.getWorld().dropItemNaturally(v.getLocation(), new ItemStack(Material.BOW));
+            v.getWorld().dropItemNaturally(v.getLocation(), new ItemStack(Material.ARROW));
+        }
+
+        if (murderP.contains(v.getUniqueId())) {
+            lastMurderName = v.getName();
+            murderP.remove(v.getUniqueId());
+        } else{
+            innocent.remove(v.getUniqueId());
+            detective.remove(v.getUniqueId());
+        }
+
+        v.setGameMode(GameMode.SPECTATOR);
         p.sendMessage(getMurder() + "§eVous avez éliminé(e) §6" + v.getName());
         checkWin();
     }
@@ -196,7 +208,6 @@ public class MManager {
                                Si Le Murder meurt → Les innocents gagnent.
     **/
     public void checkWin(){
-
         if (murderP.isEmpty()){
             for (UUID id : getPls()){
                 Player p = Bukkit.getPlayer(id);
@@ -204,14 +215,14 @@ public class MManager {
 
                 p.sendMessage(" ");
                 p.sendMessage("§2§l━━━━━━━━━━━━━━━━━━━━━━━━");
-                p.sendMessage("§a Les Innocent ont gagnés !");
+                p.sendMessage("§a Les Innocents ont gagnés !");
                 p.sendMessage("§7 Le murder était §4§l" + getLastMurderName());
                 p.sendMessage("§2§l━━━━━━━━━━━━━━━━━━━━━━━━");
                 p.sendMessage(" ");
 
-                p.playSound(p.getLocation(), Sound.ENTITY_WITCH_CELEBRATE, SoundCategory.BLOCKS, 1f, 1f);
-                onEnd();
+                p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.BLOCKS, 1f, 1f);
             }
+            onEnd();
         } else if (innocent.isEmpty()) {
             Player murderPlayer = Bukkit.getPlayer(murderP.getFirst());
 
@@ -230,11 +241,9 @@ public class MManager {
                 p.sendMessage("§4§l━━━━━━━━━━━━━━━━━━━━━━━━");
                 p.sendMessage(" ");
 
-                p.playSound(p.getLocation(), Sound.ENTITY_WITCH_CELEBRATE, SoundCategory.BLOCKS, 1f, 1f);
-                onEnd();
+                p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, SoundCategory.BLOCKS, 1f, 1f);
             }
-        }else {
-            Bukkit.broadcastMessage(getMurder() + "§cCeci n'aurait pas dû se produire..");
+            onEnd();
         }
     }
 
@@ -246,7 +255,7 @@ public class MManager {
         roles.add(MRoles.MURDER);
         roles.add(MRoles.DETECTIVE);
 
-        for (int i = 1; i < pls.size(); i++){
+        for (int i = 2; i < pls.size(); i++){
             roles.add(MRoles.Innocent);
         }
 
@@ -295,7 +304,7 @@ public class MManager {
             assert bowMeta != null;
             bowMeta.setUnbreakable(true);
             bowMeta.addEnchant(Enchantment.INFINITY, 1, true);
-            bowMeta.setDisplayName("§a§l🔫 Pistolet de la Justice");
+            bowMeta.setDisplayName("§a§l🔫 Arc de la Justice");
             bowMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
             bow.setItemMeta(bowMeta);
 
@@ -315,9 +324,12 @@ public class MManager {
 
         if (!getPls().contains(pls.getUniqueId()) || !isStarted()) return;
 
-        pls.sendTitle(roles.getName(), roles.getDescription(), 10, 30, 10);
-        pls.sendMessage("§c⚔️ Tu est " + roles.getName());
-        pls.sendMessage("§c⚔️ §r" + roles.getDescription());
+        pls.sendMessage(" ");
+        pls.sendMessage("§c⚔ §eTu est " + roles.getName());
+        pls.sendMessage("§c⚔ §r" + roles.getDescription());
+        pls.sendMessage(" ");
+
+        pls.sendTitle("§7Tu est" + roles.getName(), roles.getDescription(), 10, 30, 10);
         pls.playSound(pls.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, SoundCategory.BLOCKS, 0.5f, 1f);
     }
 

@@ -1,9 +1,9 @@
 package Aximox.murder;
 
 public enum MRoles {
-    MURDER("§cMurder", "§7Tu est le §cMurder§7 ! Ta mission est de tuer tout le monde"),
-    DETECTIVE("§bDetective", "§7Tu est le §bDétective§7 ! Ta mission est de trouver et de tuer le §cMurder§7 !"),
-    Innocent("§aInnocent", "§7Tu est §aInnocent§7 ! Survie..");
+    MURDER("§cMurder", "§7Ta mission est de §ctuer tout le monde"),
+    DETECTIVE("§bDetective", "§7Ta mission est de §btrouver §7et de §btuer le §cMurder§7 !"),
+    Innocent("§aInnocent", "§7Juste survie sah..");
 
     private final String name;
     private final String description;

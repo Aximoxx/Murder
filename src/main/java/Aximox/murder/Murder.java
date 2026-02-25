@@ -14,6 +14,7 @@ public final class Murder extends JavaPlugin {
         instance = this;
         MManager mManager = new MManager();
         MListener mListener = new MListener(mManager);
+        mCommand = new MCommand(mManager);
 
         Bukkit.getPluginManager().registerEvents(mListener, this);
         Objects.requireNonNull(getCommand("setrank")).setExecutor(mCommand);

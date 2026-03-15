@@ -6,20 +6,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Objects;
 
 public final class Murder extends JavaPlugin {
-    private static Murder instance;
+    private MManager manager;
     private MCommand mCommand;
+    private static Murder instance;
 
     @Override
     public void onEnable() {
         instance = this;
-        MManager mManager = new MManager();
-        MListener mListener = new MListener(mManager);
-        mCommand = new MCommand(mManager);
+
+        manager = new MManager();
+        MListener mListener = new MListener(manager);
+        mCommand = new MCommand(manager);
 
         Bukkit.getPluginManager().registerEvents(mListener, this);
         Objects.requireNonNull(getCommand("setrank")).setExecutor(mCommand);
-        Objects.requireNonNull(getCommand("start")).setExecutor(mCommand);
-        Objects.requireNonNull(getCommand("stop")).setExecutor(mCommand);
+        Objects.requireNonNull(getCommand("murder")).setExecutor(mCommand);
     }
 
     //Guetter
@@ -29,6 +30,13 @@ public final class Murder extends JavaPlugin {
 
     @Override
     public void onDisable() {
+    }
+
+    public MManager getManager() {
+        return manager;
+    }
+    public MCommand getmCommand() {
+        return mCommand;
     }
     public void setmCommand(MCommand mCommand) {
         this.mCommand = mCommand;

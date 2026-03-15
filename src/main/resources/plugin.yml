@@ -6,7 +6,5 @@ authors: [ Aximoxx ]
 commands:
   setrank:
     description: Défini le status des joueurs.
-  start:
-    description: Démarre la partie
-  stop:
-    description: Termine la partie
+  murder:
+    description: fait toute les commandes du murder

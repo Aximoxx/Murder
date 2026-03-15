@@ -63,21 +63,25 @@ public class MCommand implements CommandExecutor {
             return true;
         }
 
-        else if (c.getName().equalsIgnoreCase("start")) {
+        else if (c.getName().equalsIgnoreCase("murder")) {
+            if (args.length < 1){
+                p.sendMessage("pas d'arguments");
+                return true;
+            }
+
+            if (args[0].equalsIgnoreCase("start")) {
+                if (manager.getRankManager().getRank(p.getUniqueId()).getPower() < 3){
+                    p.sendMessage(manager.getMurder() + "§cVous n'avez pas la bonne classe pour effectuer cela !");
+                    return true;
+                }
+
+                manager.onStart(p);
+            }
+        }else if (args[0].equalsIgnoreCase("stop")) {
             if (manager.getRankManager().getRank(p.getUniqueId()).getPower() < 3){
                 p.sendMessage(manager.getMurder() + "§cVous n'avez pas la bonne classe pour effectuer cela !");
                 return true;
             }
-
-            manager.onStart(p);
-        }
-
-        else if (c.getName().equalsIgnoreCase("stop")) {
-            if (manager.getRankManager().getRank(p.getUniqueId()).getPower() < 3){
-                p.sendMessage(manager.getMurder() + "§cVous n'avez pas la bonne classe pour effectuer cela !");
-                return true;
-            }
-
             manager.onEnd();
         }
 

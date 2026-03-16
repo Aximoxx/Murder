@@ -8,6 +8,7 @@ import java.util.Objects;
 public final class Murder extends JavaPlugin {
     private MManager manager;
     private MCommand mCommand;
+    private MListener mListener;
     private static Murder instance;
 
     @Override
@@ -15,7 +16,7 @@ public final class Murder extends JavaPlugin {
         instance = this;
 
         manager = new MManager();
-        MListener mListener = new MListener(manager);
+        mListener = new MListener(manager);
         mCommand = new MCommand(manager);
 
         Bukkit.getPluginManager().registerEvents(mListener, this);
@@ -37,6 +38,9 @@ public final class Murder extends JavaPlugin {
     }
     public MCommand getmCommand() {
         return mCommand;
+    }
+    public MListener getmListener() {
+        return mListener;
     }
     public void setmCommand(MCommand mCommand) {
         this.mCommand = mCommand;

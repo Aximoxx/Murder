@@ -2,9 +2,7 @@ package Aximox.murder;
 
 import Aximox.murder.grade.RankManager;
 import org.bukkit.*;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -103,7 +101,8 @@ public class MManager {
                         }
 
                         if (timer == 0) {
-                            pls.sendTitle("§a§lBonne chance !", "§7Vous en aurez besoin", 10, 30, 10);
+                            // TOdo: Plusieurs spawns
+                            pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
                             pls.playSound(pls.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f);
 
                             distributeRole(new ArrayList<>(getPls()));
@@ -146,7 +145,7 @@ public class MManager {
                     if (pls != null) {
                         pls.getInventory().clear();
                         pls.setGameMode(GameMode.SURVIVAL);
-                        pls.teleport(new Location(Bukkit.getWorld("world"), 0, 100, 0));
+                        pls.teleport(new Location(Bukkit.getWorld("world"), -47, 58, -278, 0f, 0f));
                     }
                 }
 
@@ -177,17 +176,7 @@ public class MManager {
             pls.playSound(pls.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, SoundCategory.BLOCKS, 1f, 1f);
         }
 
-        if (getRole(v) == MRoles.FANTOME) {
-            ItemStack haunt = new ItemStack(Material.WITHER_ROSE);
-            ItemMeta meta = haunt.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName("§8Malice");
-                meta.setLore(List.of("§7Hante un joueur pour les 10 prochaines secondes", "§7Usage §8| §fClique droit"));
-                meta.setEnchantmentGlintOverride(true);
-                haunt.setItemMeta(meta);
-            }
-            v.getInventory().addItem(haunt);
-        }
+
 
         if (murderP.contains(v.getUniqueId())) {
             lastMurderName = v.getName();
@@ -197,10 +186,24 @@ public class MManager {
             detective.remove(v.getUniqueId());
         }
 
-        roleMap.remove(v.getUniqueId());
-        v.setGameMode(GameMode.SPECTATOR);
-        p.sendMessage(getMurder() + "§eVous avez éliminé(e) §6" + v.getName());
-        checkWin();
+        if (getRole(v) == MRoles.FANTOME) {
+            ItemStack haunt = new ItemStack(Material.WITHER_ROSE);
+            ItemMeta meta = haunt.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§8Malice");
+                meta.setLore(List.of("§7Hante un joueur pour les 10 prochaines secondes", "§7Usage §8| §fClique droit"));
+                meta.setEnchantmentGlintOverride(true);
+                haunt.setItemMeta(meta);
+            }
+            v.setInvisible(true);
+            v.setGameMode(GameMode.ADVENTURE);
+            v.getInventory().addItem(haunt);
+        }else {
+            roleMap.remove(v.getUniqueId());
+            v.setGameMode(GameMode.SPECTATOR);
+            p.sendMessage(getMurder() + "§eVous avez éliminé(e) §6" + v.getName());
+            checkWin();
+        }
     }
 
     /**
@@ -252,7 +255,7 @@ public class MManager {
     public void distributeRole(List<UUID> pls) {
         List<MRoles> roleList = new ArrayList<>();
         roleList.add(MRoles.CAPITAINE);
-        roleList.add(MRoles.PIRATE_FOU);
+        roleList.add(MRoles.CLANDESTIN);
 
         for (int i = 2; i < pls.size(); i++) {
             if (i == 2) {
@@ -264,9 +267,9 @@ public class MManager {
             } else if (i == 5) {
                 roleList.add(MRoles.FANTOME);
             } else if (i == 6) {
-                roleList.add(MRoles.VIGIE);
+                roleList.add(MRoles.FRONTIERE);
             } else {
-                roleList.add(MRoles.Innocent);
+                roleList.add(MRoles.PASSAGER);
             }
         }
 
@@ -276,7 +279,7 @@ public class MManager {
             UUID joueur = pls.get(i);
             MRoles role = roleList.get(i);
 
-            roleMap.put(joueur, role); // ← stocke le vrai rôle
+            roleMap.put(joueur, role);
 
             if (role == MRoles.CAPITAINE) {
                 murderP.add(joueur);
@@ -304,24 +307,24 @@ public class MManager {
         if (role == MRoles.CAPITAINE) {
             ItemStack sword = new ItemStack(Material.IRON_SWORD);
             ItemMeta swordMeta = sword.getItemMeta();
-            assert swordMeta != null;
-            swordMeta.setDisplayName("§c§l🔪 Poignard du Capitaine");
-            swordMeta.setUnbreakable(true);
-            sword.setItemMeta(swordMeta);
+            if (swordMeta != null) {
+                swordMeta.setDisplayName("§c§l🔪 Poignard du Capitaine");
+                swordMeta.setUnbreakable(true);
+                sword.setItemMeta(swordMeta);
+            }
             p.getInventory().setItem(0, sword);
 
         } else if (role == MRoles.PIRATE_FOU) {
             ItemStack bow = new ItemStack(Material.WOODEN_SWORD);
             ItemMeta bowMeta = bow.getItemMeta();
-            assert bowMeta != null;
-            bowMeta.setUnbreakable(true);
-            bowMeta.addEnchant(Enchantment.INFINITY, 1, true);
-            bowMeta.setDisplayName("§a§l⚔ Sabre du Pirate");
-            bowMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
-            bow.setItemMeta(bowMeta);
-            p.getInventory().setItem(0, bow);
-            p.getInventory().setItem(9, new ItemStack(Material.ARROW));
+            if (bowMeta != null) {
+                bowMeta.setUnbreakable(true);
+                bowMeta.setEnchantmentGlintOverride(true);
+                bowMeta.setDisplayName("§a§l⚔ Sabre du Pirate");
+                bow.setItemMeta(bowMeta);
+            }
 
+            p.getInventory().setItem(0, bow);
         } else if (role == MRoles.CLANDESTIN) {
             ItemStack invis = new ItemStack(Material.AMETHYST_SHARD);
             ItemMeta invisMeta = invis.getItemMeta();
@@ -344,6 +347,16 @@ public class MManager {
                 voice.setItemMeta(vmeta);
             }
             p.getInventory().addItem(voice);
+        } else if (role == MRoles.FRONTIERE) {
+            ItemStack prison = new ItemStack(Material.IRON_BARS);
+            ItemMeta prisonMeta = prison.getItemMeta();
+            if (prisonMeta != null) {
+                prisonMeta.setDisplayName("§fPrison");
+                prisonMeta.setEnchantmentGlintOverride(true);
+                prisonMeta.setLore(List.of("§7Cet item te permet de priver la liberté d'autrui", "§7Usage §8| §fClique droit"));
+                prison.setItemMeta(prisonMeta);
+            }
+            p.getInventory().addItem(prison);
         }
 
         p.updateInventory();
@@ -363,7 +376,7 @@ public class MManager {
         pls.sendMessage("§c⚔ §r" + roles.getDescription());
         pls.sendMessage(" ");
 
-        pls.sendTitle("§7Tu est" + roles.getName(), roles.getDescription(), 10, 30, 10);
+        pls.sendTitle("§7Tu est " + roles.getName(), roles.getDescription(), 10, 30, 10);
         pls.playSound(pls.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, SoundCategory.BLOCKS, 0.5f, 1f);
     }
 
@@ -371,7 +384,7 @@ public class MManager {
      * Cette méthode sert à récupérer le vrai rôle d'un joueur.
      **/
     public MRoles getRole(Player p) {
-        return roleMap.getOrDefault(p.getUniqueId(), MRoles.Innocent);
+        return roleMap.getOrDefault(p.getUniqueId(), MRoles.PASSAGER);
     }
 
     /**
@@ -382,6 +395,7 @@ public class MManager {
         murderP.clear();
         innocent.clear();
         detective.clear();
+        Murder.getInstance().getmListener().resetFlags();
         roleMap.clear();
         started = false;
         lastMurderName = "§c⚔️ Inconnu";

@@ -8,6 +8,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public class MCommand implements CommandExecutor {
     private final MManager manager;
@@ -17,7 +18,7 @@ public class MCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender s, Command c, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender s, @NotNull Command c, @NotNull String label, String[] args) {
         if (!(s instanceof Player p)) {
             s.sendMessage(manager.getMurder() + "§cSeuls les joueurs peuvent entrer des commandes");
             return true;

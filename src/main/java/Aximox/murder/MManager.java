@@ -9,6 +9,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
+import static net.kyori.adventure.text.minimessage.tag.standard.StandardTags.reset;
+
 public class MManager {
     private boolean started;
     private String murderName = "§c⚔️ Inconnu";
@@ -92,26 +94,26 @@ public class MManager {
 
             @Override
             public void run() {
+                if (timer > 0) {
+                    for (UUID id : getPls()) {
+                        Player pls = Bukkit.getPlayer(id);
+                        if (pls == null) continue;
+                        pls.sendMessage(getMurder() + "§aLa partie démarre dans §e" + timer + "§as !");
+                        pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
+                    }
+                    timer--;
+                    return;
+                }
+
+                // timer == 0
                 for (UUID id : getPls()) {
                     Player pls = Bukkit.getPlayer(id);
-                    if (pls != null) {
-                        if (timer <= 5 && timer >= 1) {
-                            pls.sendMessage(getMurder() + "§aLa partie démarre dans §e" + timer + "§as !");
-                            pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
-                        }
-
-                        if (timer == 0) {
-                            // TOdo: Plusieurs spawns
-                            pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
-                            pls.playSound(pls.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f);
-
-                            distributeRole(new ArrayList<>(getPls()));
-                            cancel();
-                            return;
-                        }
-                    }
+                    if (pls == null) continue;
+                    pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
+                    pls.playSound(pls.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f);
                 }
-                timer--;
+                distributeRole(new ArrayList<>(getPls()));
+                cancel();
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20);
     }
@@ -149,11 +151,8 @@ public class MManager {
                     }
                 }
 
-                reset();
+                reset(); // reset() appelle pls.clear() en interne, c'est bon
                 cancel();
-                getPls().clear();
-                setStarted(false);
-                getPls().addAll(savePls);
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20);
     }

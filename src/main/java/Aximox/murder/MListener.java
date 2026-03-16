@@ -1,5 +1,6 @@
 package Aximox.murder;
 
+import Aximox.murder.grade.MGrades;
 import Aximox.murder.utils.ActionBar;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -36,7 +37,10 @@ public class MListener implements Listener {
         Player p = e.getPlayer();
         e.setJoinMessage(null);
 
+        if (!p.isOp()) Murder.getInstance().getRankManager().setRank(p.getUniqueId(), MGrades.INVITEES);
         p.teleport(new Location(p.getWorld(), -47, 58, -278, 0f, 0f));
+
+        manager.updateTabList(p);
         if (manager.getPls().contains(p.getUniqueId())) return;
         manager.onJoin(p);
     }

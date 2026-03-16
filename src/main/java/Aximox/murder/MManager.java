@@ -1,11 +1,13 @@
 package Aximox.murder;
 
+import Aximox.murder.grade.MGrades;
 import Aximox.murder.grade.RankManager;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 
@@ -383,6 +385,18 @@ public class MManager {
      **/
     public MRoles getRole(Player p) {
         return roleMap.getOrDefault(p.getUniqueId(), MRoles.PASSAGER);
+    }
+
+    public void updateTabList(Player p) {
+        MGrades rank = Murder.getInstance().getRankManager().getRank(p.getUniqueId());
+        String teamName = String.format("%02d_%s", 10 - rank.getPower(), rank.name());
+
+        Team team = p.getScoreboard().getTeam(teamName);
+        if (team == null) team = p.getScoreboard().registerNewTeam(teamName);
+
+        team.setPrefix(rank.getPrefix());
+        team.addEntry(p.getName());
+        p.setPlayerListName(rank.getPrefix() + p.getName());
     }
 
     /**

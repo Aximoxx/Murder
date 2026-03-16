@@ -61,6 +61,8 @@ public class MCommand implements CommandExecutor {
 
             target.sendMessage("§a§lINFO §8| §fTon statut a été mis à jour : " + newRank.getPrefix());
             target.playSound(target.getLocation(), Sound.ENTITY_WITCH_CELEBRATE, SoundCategory.BLOCKS, 1f, 1f);
+
+            for (Player pls : Bukkit.getOnlinePlayers()) manager.updateTabList(pls);
             return true;
         }
 

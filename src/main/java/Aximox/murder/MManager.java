@@ -130,28 +130,27 @@ public class MManager {
 
             @Override
             public void run() {
-                if (timer >= 1) {
-                    for (UUID id : getPls()) {
+                if (timer > 0) {
+                    for (UUID id : savePls) {
                         Player pls = Bukkit.getPlayer(id);
-                        if (pls != null) {
-                            pls.sendMessage(getMurder() + "§aLa partie se terminera dans §e" + timer + "§as !");
-                            pls.playSound(pls.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.BLOCKS, 1f, 1f);
-                        }
+                        if (pls == null) continue;
+                        pls.sendMessage(getMurder() + "§aLa partie se terminera dans §e" + timer + "§as !");
+                        pls.playSound(pls.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.BLOCKS, 1f, 1f);
                     }
                     timer--;
                     return;
                 }
 
+                // timer == 0
                 for (UUID id : savePls) {
                     Player pls = Bukkit.getPlayer(id);
-                    if (pls != null) {
-                        pls.getInventory().clear();
-                        pls.setGameMode(GameMode.SURVIVAL);
-                        pls.teleport(new Location(Bukkit.getWorld("world"), -47, 58, -278, 0f, 0f));
-                    }
+                    if (pls == null) continue;
+                    pls.getInventory().clear();
+                    pls.setGameMode(GameMode.SURVIVAL);
+                    pls.teleport(new Location(Bukkit.getWorld("world"), -47, 58, -278, 0f, 0f));
                 }
 
-                reset(); // reset() appelle pls.clear() en interne, c'est bon
+                reset();
                 cancel();
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20);
@@ -390,7 +389,6 @@ public class MManager {
      * Cette méthode sert à remettre le jeu de 0.
      **/
     public void reset() {
-        pls.clear();
         murderP.clear();
         innocent.clear();
         detective.clear();

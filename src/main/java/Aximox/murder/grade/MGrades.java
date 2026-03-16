@@ -2,8 +2,8 @@ package Aximox.murder.grade;
 
 public enum MGrades {
 
-    HOST("§7[§6Host§7] ", 3),
-    INVITEES("§7[§cInvité(e)s§7] ", 1);
+    HOST("§7[§6Host§7] §r", 3),
+    INVITEES("§7[§cInvité(e)s§7] §r", 1);
 
     private final String prefix;
     private final int power;

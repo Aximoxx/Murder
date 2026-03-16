@@ -1,5 +1,6 @@
 package Aximox.murder;
 
+import Aximox.murder.grade.RankManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -10,10 +11,14 @@ public final class Murder extends JavaPlugin {
     private MCommand mCommand;
     private MListener mListener;
     private static Murder instance;
+    private RankManager rankManager;
 
     @Override
     public void onEnable() {
         instance = this;
+
+        rankManager = new RankManager();
+        getRankManager().loadRanks();
 
         manager = new MManager();
         mListener = new MListener(manager);
@@ -31,6 +36,7 @@ public final class Murder extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getRankManager().saveAllRanks();
     }
 
     public MManager getManager() {
@@ -41,6 +47,9 @@ public final class Murder extends JavaPlugin {
     }
     public MListener getmListener() {
         return mListener;
+    }
+    public RankManager getRankManager() {
+        return rankManager;
     }
     public void setmCommand(MCommand mCommand) {
         this.mCommand = mCommand;

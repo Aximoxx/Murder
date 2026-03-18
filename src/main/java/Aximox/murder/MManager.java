@@ -479,11 +479,10 @@ public class MManager {
     }
 
     public void resetChest() {
-        List<Location> chest = Murder.getInstance().getChests();
-        Location chests = chest.get(new Random().nextInt(chest.size()));
-
-        if (Bukkit.getWorld("world").getBlockAt(chests).getType() == Material.WARPED_SLAB) {
-            Bukkit.getWorld("world").getBlockAt(chests).setType(Material.AIR);
+        for (Location chest : Murder.getInstance().getChests()) {
+            if (Bukkit.getWorld("world").getBlockAt(chest).getType() == Material.WARPED_SLAB) {
+                Bukkit.getWorld("world").getBlockAt(chest).setType(Material.AIR);
+            }
         }
     }
 

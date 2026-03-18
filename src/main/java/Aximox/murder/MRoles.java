@@ -11,7 +11,7 @@ public enum MRoles {
 
     // Les rôles que le méchant doit tuer
     PIRATE_FOU("§dPirate fou", "§7Tu as la possibilité d'éliminer un joueur de ton choix, si il est gentil, tu capoute !"),
-    VIGIE("§fLa vigie", "§7Tout les 30 secondes, tu aperçoit tout les joueurs dans un rayon de 10 blocs"), //À faire plus tards car gestion des paquets,
+    VIGIE("§fLa vigie", "§7Tout les 30 secondes, tu aperçoit tout les joueurs dans un rayon de 10 blocs"), // À faire plus tards car gestion des paquets,
     SIRENE("§dSirène", "§7Tu peux ralentir les joueurs que tu croise avec ton chant"),
     FANTOME("§8Fantome du Naufrage", "§7Tu peux hanter quelqu'un après ta mort."),
     CLANDESTIN("§7Passager Clandestin", "§7Tu as la possibilité de te cacher tout les 40 secondes"),

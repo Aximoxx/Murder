@@ -3,10 +3,14 @@ package Aximox.murder;
 import Aximox.murder.grade.MGrades;
 import Aximox.murder.utils.ActionBar;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -74,6 +78,52 @@ public class MListener implements Listener {
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted()) return;
 
+        Block block = e.getClickedBlock();
+        if (block != null) {
+
+            if (e.getClickedBlock().getType() == Material.WARPED_SLAB) {
+                if (manager.getRole(p) != MRoles.TRESOR) {
+                    p.sendMessage("§cNON ! Seul les vilains méchants voleurs peuvent toucher se coffre");
+                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, SoundCategory.BLOCKS, 1f, 1f);
+                    return;
+                }
+
+                new BukkitRunnable() {
+                    private int timer = 5;
+
+                    @Override
+                    public void run() {
+
+                        if (p.getLocation().distance(e.getClickedBlock().getLocation()) > 3) {
+                            p.sendMessage("§cTu n'est pas Luffy, ton bras ne s'allonge pas en même temps que toi !");
+                            p.sendMessage("§7Rapproche toi un petit peu plus et réessaye");
+                            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, SoundCategory.BLOCKS, 1f, 1f);
+                            cancel();
+                        }
+
+                        if (timer == 5) {
+                            p.sendMessage("§6Vous êtes entrain de crocheter le coffre !");
+                            p.playSound(p.getLocation(), Sound.BLOCK_TRIAL_SPAWNER_EJECT_ITEM, SoundCategory.BLOCKS, 1f, 1f);
+                        }
+
+                        if (timer == 0) {
+                            e.getClickedBlock().setType(Material.AIR);
+                            p.sendMessage("§6Tu as parfaitement crocheté le coffre !");
+                            Bukkit.getWorld("world").spawnParticle(Particle.WITCH, e.getClickedBlock().getLocation().add(0, 1, 0), 50, 0.5, 0.5, 0.5, 50);
+                            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+
+                            cancel();
+                        }
+
+                        // Peut être monter le pitch à chaque seconde
+                        p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
+
+                        timer--;
+                    }
+                }.runTaskTimer(Murder.getInstance(), 0, 20L);
+            }
+        }
+
         ItemStack item = e.getItem();
         if (item == null) return;
 
@@ -120,6 +170,7 @@ public class MListener implements Listener {
         }
         else if (manager.getRole(p).equals(MRoles.CLANDESTIN)) {
             if (item.getType() != Material.AMETHYST_SHARD) return;
+            MGrades rank = Murder.getInstance().getRankManager().getRank(p.getUniqueId());
 
             if (isInvis()){
                 new BukkitRunnable() {
@@ -130,6 +181,7 @@ public class MListener implements Listener {
                         ActionBar.send(p, "§cCooldown: §f" + timer);
 
                         if (timer == 40) {
+                            Murder.getInstance().getRankManager().removeRank(p.getUniqueId());
                             p.sendMessage("§7Tu est invisible pour les 10 prochaines secondes !");
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 200, 1));
                             p.setInvisible(true);
@@ -143,12 +195,48 @@ public class MListener implements Listener {
 
                         if (timer == 0){
                             setInvis(true);
+                            Murder.getInstance().getRankManager().setRank(p.getUniqueId(), rank);
                             cancel();
                         }
                         timer--;
                     }
                 }.runTaskTimer(Murder.getInstance(), 0, 20L);
             }
+        }
+    }
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent e) {
+        Player p = e.getPlayer();
+        if (!manager.isStarted() || !manager.getPls().contains(p.getUniqueId())) return;
+
+        if (p.getLocation().getZ() >= 200 || p.getLocation().getZ() <= -50 ) {
+            manager.onKill(p, p);
+        }
+
+        if (p.getLocation().getX() >= 90 || p.getLocation().getX() <= -40 ) {
+            manager.onKill(p, p);
+        }
+
+        if (p.getLocation().getY() <= -20) {
+            manager.onKill(p, p);
+        }
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent e) {
+        Player p = e.getPlayer();
+        Block placed = e.getBlockPlaced();
+        Block against = e.getBlockAgainst();
+
+        if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted()) return;
+
+        if (e.getBlockPlaced().getType() != Material.LEVER) return;
+        if (e.getBlockAgainst().getType() != Material.IRON_BLOCK) return;
+
+        BlockFace face = against.getFace(placed);
+        if (face.equals(BlockFace.EAST) || face.equals(BlockFace.WEST)){
+            //trouver la suite
         }
     }
 
@@ -176,6 +264,14 @@ public class MListener implements Listener {
             p.setInvisible(false);
             p.setGameMode(GameMode.SPECTATOR);
         }
+    }
+
+    @EventHandler
+    public void onReportCorps(PlayerInteractAtEntityEvent e){
+        Player p = e.getPlayer();
+        if (!(e.getRightClicked() instanceof ArmorStand as)) return;
+
+        p.sendMessage("§7[§bDEBUG§7] §aClick enregisté sur un armorstand !");
     }
 
     @EventHandler

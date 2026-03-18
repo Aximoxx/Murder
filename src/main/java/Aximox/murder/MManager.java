@@ -3,6 +3,7 @@ package Aximox.murder;
 import Aximox.murder.grade.MGrades;
 import Aximox.murder.grade.RankManager;
 import org.bukkit.*;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -10,8 +11,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
 import java.util.*;
-
-import static net.kyori.adventure.text.minimessage.tag.standard.StandardTags.reset;
 
 public class MManager {
     private boolean started;
@@ -21,6 +20,7 @@ public class MManager {
     private final List<UUID> murderP = new ArrayList<>();
     private final List<UUID> innocent = new ArrayList<>();
     private final List<UUID> detective = new ArrayList<>();
+    private final List<ArmorStand> morts = new ArrayList<>();
     private final Map<UUID, MRoles> roleMap = new HashMap<>();
     private final RankManager rankManager = new RankManager();
 
@@ -89,33 +89,36 @@ public class MManager {
             return;
         }
 
-        setStarted(true);
-
         new BukkitRunnable() {
-            private int timer = 5;
+            private int timer = 6;
 
             @Override
             public void run() {
-                if (timer > 0) {
+                if (timer <= 5 && timer >= 0) {
                     for (UUID id : getPls()) {
                         Player pls = Bukkit.getPlayer(id);
                         if (pls == null) continue;
                         pls.sendMessage(getMurder() + "§aLa partie démarre dans §e" + timer + "§as !");
                         pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
                     }
-                    timer--;
-                    return;
                 }
 
-                // timer == 0
-                for (UUID id : getPls()) {
-                    Player pls = Bukkit.getPlayer(id);
-                    if (pls == null) continue;
-                    pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
-                    pls.playSound(pls.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f);
+                if (timer == 1){
+                    for (UUID id : getPls()) {
+                        Player pls = Bukkit.getPlayer(id);
+                        if (pls == null) continue;
+                        pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
+                        pls.playSound(pls.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f);
+                    }
                 }
-                distributeRole(new ArrayList<>(getPls()));
-                cancel();
+
+                if (timer == 0){
+                    distributeRole(new ArrayList<>(getPls()));
+                    spawnChest();
+                    setStarted(true);
+                    cancel();
+                }
+                timer--;
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20);
     }
@@ -176,8 +179,6 @@ public class MManager {
             pls.playSound(pls.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, SoundCategory.BLOCKS, 1f, 1f);
         }
 
-
-
         if (murderP.contains(v.getUniqueId())) {
             lastMurderName = v.getName();
             murderP.remove(v.getUniqueId());
@@ -202,6 +203,8 @@ public class MManager {
             roleMap.remove(v.getUniqueId());
             v.setGameMode(GameMode.SPECTATOR);
             p.sendMessage(getMurder() + "§eVous avez éliminé(e) §6" + v.getName());
+
+            morts.add(setCorps(v));
             checkWin();
         }
     }
@@ -258,7 +261,7 @@ public class MManager {
         roleList.add(MRoles.CLANDESTIN);
 
         for (int i = 2; i < pls.size(); i++) {
-            if (i == 2) {
+            if (i == 6) {
                 roleList.add(MRoles.SIRENE);
             } else if (i == 3) {
                 roleList.add(MRoles.CLANDESTIN);
@@ -266,7 +269,7 @@ public class MManager {
                 roleList.add(MRoles.TRESOR);
             } else if (i == 5) {
                 roleList.add(MRoles.FANTOME);
-            } else if (i == 6) {
+            } else if (i == 2) {
                 roleList.add(MRoles.FRONTIERE);
             } else {
                 roleList.add(MRoles.PASSAGER);
@@ -296,6 +299,36 @@ public class MManager {
                 annonceR(joueur, role);
             }
         }
+    }
+
+    public void spawnChest(){
+        new BukkitRunnable() {
+            private int timer = 90;
+            @Override
+            public void run() {
+
+                if (!isStarted()){
+                    Bukkit.getLogger().info("§cLe spawn des coffres à été intérrompue");
+                    cancel();
+                }
+
+                if (timer == 30 || timer == 60 || timer == 90){
+                    List<Location> chest = Murder.getInstance().getChests();
+                    Location randomChest = chest.get(new Random().nextInt(chest.size()));
+                    randomChest.setYaw(0);
+
+                    Bukkit.getWorld("world").getBlockAt(randomChest).setType(Material.WARPED_SLAB);
+                    Bukkit.broadcastMessage("§aUn coffre vien d'apparaître !");
+                    Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f));
+                }
+
+                if (timer == 0){
+                    cancel();
+                }
+
+                timer--;
+            }
+        }.runTaskTimer(Murder.getInstance(), 0, 20L);
     }
 
     /**
@@ -380,6 +413,36 @@ public class MManager {
         pls.playSound(pls.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, SoundCategory.BLOCKS, 0.5f, 1f);
     }
 
+    public void setChest(Player p){
+        if (!p.getWorld().equals(Bukkit.getWorld("world"))) return;
+
+        int chest = Murder.getInstance().getConfig().getInt("murder.chestCount", 0) + 1;
+
+        Murder.getInstance().getConfig().set("murder.chestCount", chest);
+        Murder.getInstance().getConfig().set("murder.chest" + chest, p.getLocation());
+        Murder.getInstance().saveConfig();
+
+        p.sendMessage("§aLe coffre §b#" + chest + " §aà bien été ajouté au coordonée §bx: §f" + p.getLocation().getX() + "§f, §by: §f" + p.getLocation().getY() + "§f, §bz: §f" + p.getLocation().getZ());
+    }
+
+    public void setBuzzer(Player p){
+        ArmorStand as = p.getWorld().spawn(p.getLocation(), ArmorStand.class);
+        as.setVisible(false);
+        as.setGravity(false);
+        as.setCustomName("§cBUZZER D'URGENCE");
+        as.setCustomNameVisible(true);
+    }
+
+    public ArmorStand setCorps(Player p){
+        ArmorStand as = p.getWorld().spawn(p.getLocation(), ArmorStand.class);
+
+        as.setVisible(false);
+        as.setGravity(false);
+        as.setCustomName("§c§l\uD83D\uDC80 §8| §cIçi repose §6" + p.getName());
+        as.setCustomNameVisible(true);
+        return as;
+    }
+
     /**
      * Cette méthode sert à récupérer le vrai rôle d'un joueur.
      **/
@@ -403,13 +466,31 @@ public class MManager {
      * Cette méthode sert à remettre le jeu de 0.
      **/
     public void reset() {
+        resetDeahtAS();
         murderP.clear();
         innocent.clear();
         detective.clear();
         Murder.getInstance().getmListener().resetFlags();
+        resetChest();
         roleMap.clear();
         started = false;
         lastMurderName = "§c⚔️ Inconnu";
+    }
+
+    public void resetChest() {
+        List<Location> chest = Murder.getInstance().getChests();
+        Location chests = chest.get(new Random().nextInt(chest.size()));
+
+        if (Bukkit.getWorld("world").getBlockAt(chests).getType() == Material.WARPED_SLAB) {
+            Bukkit.getWorld("world").getBlockAt(chests).setType(Material.AIR);
+        }
+    }
+
+    public void resetDeahtAS(){
+        for (ArmorStand mort : morts){
+            mort.remove();
+        }
+        morts.clear();
     }
 
     // Getters

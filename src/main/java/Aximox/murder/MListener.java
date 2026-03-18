@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
@@ -72,11 +73,15 @@ public class MListener implements Listener {
         e.setCancelled(true);
     }
 
+    /**
+     *La méthode qui s'occupe des rôles et de leurs intéractions avec leurs pouvoirs
+     */
     @EventHandler
     public void onActivate(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted()) return;
+        if (e.getHand() != EquipmentSlot.HAND) return;
 
         Block block = e.getClickedBlock();
         if (block != null) {
@@ -115,8 +120,7 @@ public class MListener implements Listener {
                             cancel();
                         }
 
-                        // Peut être monter le pitch à chaque seconde
-                        p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
+                        p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, (5 - timer) * 0.2f + 1f);
 
                         timer--;
                     }
@@ -205,10 +209,14 @@ public class MListener implements Listener {
         }
     }
 
+    /**
+     *La méthode qui tue les gens en dehors de la map
+     */
     @EventHandler
     public void onMove(PlayerMoveEvent e) {
         Player p = e.getPlayer();
         if (!manager.isStarted() || !manager.getPls().contains(p.getUniqueId())) return;
+        if (p.getGameMode() == GameMode.SPECTATOR) return;
 
         if (p.getLocation().getZ() >= 200 || p.getLocation().getZ() <= -50 ) {
             manager.onKill(p, p);
@@ -223,6 +231,9 @@ public class MListener implements Listener {
         }
     }
 
+    /**
+     *La méthode qui servira pour les quêtes
+     */
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
         Player p = e.getPlayer();
@@ -236,10 +247,13 @@ public class MListener implements Listener {
 
         BlockFace face = against.getFace(placed);
         if (face.equals(BlockFace.EAST) || face.equals(BlockFace.WEST)){
-            //trouver la suite
+            //Todo: trouver la suite
         }
     }
 
+    /**
+     *La méthode qui gère le rôle du Fantôme
+     */
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e){
         Player p = (Player) e.getWhoClicked();
@@ -266,14 +280,31 @@ public class MListener implements Listener {
         }
     }
 
+    /**
+     * La méthode pour report les corps
+     */
     @EventHandler
     public void onReportCorps(PlayerInteractAtEntityEvent e){
         Player p = e.getPlayer();
         if (!(e.getRightClicked() instanceof ArmorStand as)) return;
 
-        p.sendMessage("§7[§bDEBUG§7] §aClick enregisté sur un armorstand !");
+       if (as.getCustomName().contains("§cIçi repose §6")){
+           String deadPlayer = as.getCustomName().replace("§c§l\uD83D\uDC80 §8| §cIçi repose §6", "");
+
+           for (UUID id : manager.getPls()){
+               Player pls = Bukkit.getPlayer(id);
+               if (pls != null){
+                   pls.sendMessage("§e" + p.getName() + " §ea trouvé(e) le corps de §c" + deadPlayer);
+                   pls.playSound(pls.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_0, SoundCategory.BLOCKS, 1f, 1f);
+                   //Todo: activer la réu (à faire dans le manager)
+               }
+           }
+       }
     }
 
+    /**
+     *La méthode qui gère entièrement le rôle Frontière
+     */
     @EventHandler
     public void onInteract(PlayerInteractAtEntityEvent e) {
         if (!(e.getRightClicked() instanceof Player target)) return;
@@ -352,6 +383,9 @@ public class MListener implements Listener {
         }.runTaskTimer(Murder.getInstance(), 0, 20L);
     }
 
+    /**
+     *La méthode qui gère les kills du Capitaine et du Pirate Fou
+     */
     @EventHandler
     public void onAttack(EntityDamageByEntityEvent e){
         if (!(e.getEntity() instanceof Player victim)) return;
@@ -364,13 +398,11 @@ public class MListener implements Listener {
 
             Material hand = attacker.getInventory().getItemInMainHand().getType();
 
-            // Empêche de tuer sans épée
             if (hand != Material.IRON_SWORD && hand != Material.WOODEN_SWORD) {
                 e.setCancelled(true);
                 return;
             }
 
-            // Seul le Capitaine ou le Pirate Fou peut tuer
             MRoles role = manager.getRole(attacker);
             if (!role.equals(MRoles.CAPITAINE) && !role.equals(MRoles.PIRATE_FOU)) {
                 e.setCancelled(true);

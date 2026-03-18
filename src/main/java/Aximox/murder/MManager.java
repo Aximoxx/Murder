@@ -37,6 +37,7 @@ public class MManager {
         if (isStarted()) {
             p.sendMessage(getMurder() + "§eUne partie est déjà en cours, attendez la prochaine !");
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, SoundCategory.BLOCKS, 1f, 1f);
+            return;
         }
 
         for (UUID id : pls) {

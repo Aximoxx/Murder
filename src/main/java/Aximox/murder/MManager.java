@@ -2,6 +2,7 @@ package Aximox.murder;
 
 import Aximox.murder.grade.MGrades;
 import Aximox.murder.grade.RankManager;
+import Aximox.murder.utils.ActionBar;
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
@@ -14,9 +15,11 @@ import java.util.*;
 
 public class MManager {
     private boolean started;
+    private boolean reunion;
     private String murderName = "§c⚔️ Inconnu";
     private String lastMurderName = "§c⚔️ Inconnu";
     private final List<UUID> pls = new ArrayList<>();
+    private final List<UUID> death = new ArrayList<>();
     private final List<UUID> murderP = new ArrayList<>();
     private final List<UUID> innocent = new ArrayList<>();
     private final List<UUID> detective = new ArrayList<>();
@@ -206,6 +209,7 @@ public class MManager {
             p.sendMessage(getMurder() + "§eVous avez éliminé(e) §6" + v.getName());
 
             morts.add(setCorps(v));
+            death.add(v.getUniqueId());
             checkWin();
         }
     }
@@ -446,6 +450,48 @@ public class MManager {
         return as;
     }
 
+    public void reuLogic(Player p){
+        new BukkitRunnable() {
+            private int timer = 60;
+
+            @Override
+            public void run() {
+
+                if (timer == 60){
+                    for (UUID id : getPls()){
+                        Player pls = Bukkit.getPlayer(id);
+                        if (pls != null){
+                            setReunion(true);
+                            pls.teleport(new Location(pls.getWorld(), 27, -24, 64));
+                        }
+                    }
+                }
+
+                if (timer == 0){
+                    setReunion(false);
+
+                    for (UUID uuid : getPls()){
+                        Player pls = Bukkit.getPlayer(uuid);
+                        if (pls != null){
+                            pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
+                            pls.sendMessage("§aLa réunion est maintenant terminée");
+                        }
+                    }
+                    cancel();
+                }
+
+                for (UUID id : getPls()){
+                    Player pls = Bukkit.getPlayer(id);
+                    if (pls != null){
+                        ActionBar.send(pls, "§6Temps restant: §f" + timer);
+                    }
+                }
+
+                timer--;
+            }
+        }.runTaskTimer(Murder.getInstance(), 0, 20L);
+    }
+
     /**
      * Cette méthode sert à récupérer le vrai rôle d'un joueur.
      **/
@@ -469,6 +515,7 @@ public class MManager {
      * Cette méthode sert à remettre le jeu de 0.
      **/
     public void reset() {
+        death.clear();
         resetDeahtAS();
         murderP.clear();
         innocent.clear();
@@ -497,6 +544,12 @@ public class MManager {
 
     // Getters
     public List<UUID> getPls() { return pls; }
+    public boolean isReunion() {
+        return reunion;
+    }
+    public List<UUID> getDeath() {
+        return death;
+    }
     public boolean isStarted() { return started; }
     public String getMurder() { return "§cMurder: "; }
     public List<UUID> getMurderP() { return murderP; }
@@ -504,7 +557,10 @@ public class MManager {
     public List<UUID> getDetective() { return detective; }
     public RankManager getRankManager() { return rankManager; }
     public String getLastMurderName() { return lastMurderName; }
-
     // Setters
+
     public void setStarted(boolean started) { this.started = started; }
+    public void setReunion(boolean reunion) {
+        this.reunion = reunion;
+    }
 }

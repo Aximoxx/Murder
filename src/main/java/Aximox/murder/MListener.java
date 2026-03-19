@@ -1,6 +1,7 @@
 package Aximox.murder;
 
 import Aximox.murder.grade.MGrades;
+import Aximox.murder.gui.GhostGUI;
 import Aximox.murder.utils.ActionBar;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -22,9 +23,8 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.security.KeyStore;
+import java.util.*;
 
 public class MListener implements Listener {
     private boolean cell = true;
@@ -32,6 +32,7 @@ public class MListener implements Listener {
     private boolean invis = true;
     private final MManager manager;
     private List<UUID> cooldown = new ArrayList<>();
+    private HashMap<UUID, UUID> votes = new HashMap<>();
 
     public MListener(MManager manager){
         this.manager = manager;
@@ -80,7 +81,7 @@ public class MListener implements Listener {
     public void onActivate(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted()) return;
+        if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted() || manager.isReunion()) return;
         if (e.getHand() != EquipmentSlot.HAND) return;
 
         Block block = e.getClickedBlock();
@@ -138,6 +139,7 @@ public class MListener implements Listener {
             new GhostGUI(p).open(p);
 
         }
+
         else if (manager.getRole(p).equals(MRoles.SIRENE)) {
             if (item.getType() == Material.SUNFLOWER) {
                 if (!isCharm()) return;
@@ -215,7 +217,7 @@ public class MListener implements Listener {
     @EventHandler
     public void onMove(PlayerMoveEvent e) {
         Player p = e.getPlayer();
-        if (!manager.isStarted() || !manager.getPls().contains(p.getUniqueId())) return;
+        if (!manager.isStarted() || !manager.getPls().contains(p.getUniqueId()) || manager.isReunion()) return;
         if (p.getGameMode() == GameMode.SPECTATOR) return;
 
         if (p.getLocation().getZ() >= 200 || p.getLocation().getZ() <= -50 ) {
@@ -258,6 +260,29 @@ public class MListener implements Listener {
     public void onInventoryClick(InventoryClickEvent e){
         Player p = (Player) e.getWhoClicked();
 
+        if (p.getOpenInventory().getTitle().equalsIgnoreCase("§cChoisi un joueur sur qui se porteras ton vote")){
+            e.setCancelled(true);
+
+            if (e.getCurrentItem() == null) return;
+            if (e.getCurrentItem().getItemMeta() == null) return;
+
+            SkullMeta meta = (SkullMeta) e.getCurrentItem().getItemMeta();
+            Player target = Bukkit.getPlayer(meta.getOwningPlayer().getName());
+
+            if (target == null) return;
+
+            if (getVotes().containsKey(p.getUniqueId())) return;
+
+            getVotes().put(p.getUniqueId(), target.getUniqueId());
+
+            UUID mostVoted = votes.values().stream()
+                    .max(Comparator.comparingInt(uuid -> Collections.frequency(votes.values(), uuid)))
+                    .orElse(null);
+
+            Player player = Bukkit.getPlayer(mostVoted);
+
+        }
+
         if (p.getOpenInventory().getTitle().equalsIgnoreCase("§8Joueur à Hanter")){
             e.setCancelled(true);
 
@@ -288,6 +313,10 @@ public class MListener implements Listener {
         Player p = e.getPlayer();
         if (!(e.getRightClicked() instanceof ArmorStand as)) return;
 
+        if (manager.isReunion()){
+            return;
+        }
+
        if (as.getCustomName().contains("§cIçi repose §6")){
            String deadPlayer = as.getCustomName().replace("§c§l\uD83D\uDC80 §8| §cIçi repose §6", "");
 
@@ -296,7 +325,7 @@ public class MListener implements Listener {
                if (pls != null){
                    pls.sendMessage("§e" + p.getName() + " §ea trouvé(e) le corps de §c" + deadPlayer);
                    pls.playSound(pls.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_0, SoundCategory.BLOCKS, 1f, 1f);
-                   //Todo: activer la réu (à faire dans le manager)
+                   manager.reuLogic(pls);
                }
            }
        }
@@ -415,6 +444,11 @@ public class MListener implements Listener {
             return;
         }
 
+        if (manager.isReunion()){
+            attacker.sendMessage("§cTu ne peux pas utiliser ton pouvoir pendant les réunions !");
+            return;
+        }
+
         e.setCancelled(true);
 
         if (Murder.getInstance().getManager().getRole(attacker).equals(MRoles.PIRATE_FOU)) {
@@ -437,6 +471,9 @@ public class MListener implements Listener {
     }
 
     // Getters
+    public HashMap<UUID, UUID> getVotes() {
+        return votes;
+    }
     public List<UUID> getCooldown() {
         return cooldown;
     }
@@ -451,7 +488,6 @@ public class MListener implements Listener {
     }
 
     // Setters
-
     public void setInvis(boolean invis) {
         this.invis = invis;
     }

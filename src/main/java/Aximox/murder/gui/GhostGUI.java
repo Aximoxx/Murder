@@ -1,5 +1,6 @@
-package Aximox.murder;
+package Aximox.murder.gui;
 
+import Aximox.murder.Murder;
 import fr.mrmicky.fastinv.FastInv;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -7,7 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +19,9 @@ public class GhostGUI extends FastInv {
         super(36, "§8Joueur à Hanter");
 
         for (Player pls : Bukkit.getOnlinePlayers()){
-            if (Murder.getInstance().getManager().getInnocent().contains(pls.getUniqueId()) || Murder.getInstance().getManager().getDetective().contains(pls.getUniqueId())) {
+            if (Murder.getInstance().getManager().getPls().contains(pls.getUniqueId())) {
+                if (Murder.getInstance().getManager().getDeath().contains(pls.getUniqueId())) return;
+
                 alive.add(pls.getUniqueId());
                 alive.remove(p.getUniqueId());
 

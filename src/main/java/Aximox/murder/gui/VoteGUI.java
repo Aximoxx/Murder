@@ -16,7 +16,7 @@ public class VoteGUI extends FastInv {
     private List<UUID> alive = new ArrayList<>();
 
     public VoteGUI(Player p) {
-        super(36, "§cChoisi un joueur sur qui se porteras ton vote");
+        super(36, "§cᴘᴏᴜʀ ǫᴜɪ ᴠᴏᴛᴇʀᴀs-ᴛᴜ ?");
 
         for (Player pls : Bukkit.getOnlinePlayers()){
             if (Murder.getInstance().getManager().getPls().contains(pls.getUniqueId())) {

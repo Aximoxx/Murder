@@ -3,6 +3,7 @@ package Aximox.murder;
 import Aximox.murder.grade.MGrades;
 import Aximox.murder.grade.RankManager;
 import Aximox.murder.utils.ActionBar;
+import fr.mrmicky.fastinv.ItemBuilder;
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
@@ -20,6 +21,8 @@ public class MManager {
     private String lastMurderName = "§c⚔️ Inconnu";
     private final List<UUID> pls = new ArrayList<>();
     private final List<UUID> death = new ArrayList<>();
+    private final List<UUID> avote = new ArrayList<>();
+    private HashMap<UUID, UUID> votes = new HashMap<>();
     private final List<UUID> murderP = new ArrayList<>();
     private final List<UUID> innocent = new ArrayList<>();
     private final List<UUID> detective = new ArrayList<>();
@@ -32,13 +35,13 @@ public class MManager {
      **/
     public void onJoin(Player p) {
         if (getPls().contains(p.getUniqueId())) {
-            p.sendMessage(getMurder() + "§eMalheureusement, vous êtes déjà dans la partie..");
+            p.sendMessage(getMurder() + "§eᴍᴀʟʜᴇᴜʀᴇᴜsᴇᴍᴇɴᴛ, ᴠᴏᴜs ᴇ̂ᴛᴇs ᴅᴇ́ᴊᴀ̀ ᴅᴀɴs ʟᴀ ᴘᴀʀᴛɪᴇ..");
             p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.BLOCKS, 1f, 1f);
             return;
         }
 
         if (isStarted()) {
-            p.sendMessage(getMurder() + "§eUne partie est déjà en cours, attendez la prochaine !");
+            p.sendMessage(getMurder() + "§eᴜɴᴇ ᴘᴀʀᴛɪᴇ ᴇsᴛ ᴅᴇ́ᴊᴀ̀ ᴇɴ ᴄᴏᴜʀs, ᴀᴛᴛᴇɴᴅᴇᴢ ʟᴀ ᴘʀᴏᴄʜᴀɪɴᴇ !");
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, SoundCategory.BLOCKS, 1f, 1f);
             return;
         }
@@ -46,7 +49,7 @@ public class MManager {
         for (UUID id : pls) {
             Player pls = Bukkit.getPlayer(id);
             if (pls != null) {
-                pls.sendMessage(getMurder() + "§6" + p.getName() + "§e est prêt à en découdre !");
+                pls.sendMessage(getMurder() + "§6" + p.getName() + "§e ᴇsᴛ ᴘʀᴇ̂ᴛ ᴀ̀ ᴇɴ ᴅᴇ́ᴄᴏᴜᴅʀᴇ !");
                 pls.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.BLOCKS, 1f, 1f);
             }
         }
@@ -54,7 +57,7 @@ public class MManager {
         getPls().add(p.getUniqueId());
 
         p.getInventory().clear();
-        p.sendMessage(getMurder() + "§eÊtes vous prêt à MASTERMINDER tout le monde ?");
+        p.sendMessage(getMurder() + "§eᴇ̂ᴛᴇs ᴠᴏᴜs ᴘʀᴇ̂ᴛ ᴀ̀ ᴍᴀsᴛᴇʀᴍɪɴᴅᴇʀ ᴛᴏᴜᴛ ʟᴇ ᴍᴏɴᴅᴇ ?");
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
     }
 
@@ -63,12 +66,12 @@ public class MManager {
      **/
     public void onQuit(Player p) {
         if (!getPls().contains(p.getUniqueId())) {
-            p.sendMessage(getMurder() + "§eMalheureusement, vous n'êtes dans aucune partie..");
+            p.sendMessage(getMurder() + "§eᴍᴀʟʜᴇᴜʀᴇᴜsᴇᴍᴇɴᴛ, ᴠᴏᴜs ɴ'ᴇ̂ᴛᴇs ᴅᴀɴs ᴀᴜᴄᴜɴᴇ ᴘᴀʀᴛɪᴇ..");
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, SoundCategory.BLOCKS, 1f, 1f);
             return;
         }
 
-        p.sendMessage(getMurder() + "§eIl faut croire que vous n'êtes pas le MASTERMIND que l'on ma vendu..");
+        p.sendMessage(getMurder() + "§eɪʟ ғᴀᴜᴛ ᴄʀᴏɪʀᴇ ǫᴜᴇ ᴠᴏᴜs ɴ'ᴇ̂ᴛᴇs ᴘᴀs ʟᴇ ᴍᴀsᴛᴇʀᴍɪɴᴅ ǫᴜᴇ ʟ'ᴏɴ ᴍᴀ ᴠᴇɴᴅᴜ..");
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_HURT, SoundCategory.BLOCKS, 1f, 1f);
 
         getPls().remove(p.getUniqueId());
@@ -76,7 +79,7 @@ public class MManager {
         for (UUID id : pls) {
             Player pls = Bukkit.getPlayer(id);
             if (pls != null) {
-                pls.sendMessage(getMurder() + "§6" + p.getName() + "§e s'est trop fait manipulé(e) !");
+                pls.sendMessage(getMurder() + "§6" + p.getName() + "§e s'ᴇsᴛ ᴛʀᴏᴘ ғᴀɪᴛ ᴍᴀɴɪᴘᴜʟᴇ́(ᴇ) !");
                 pls.playSound(p.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, SoundCategory.BLOCKS, 1f, 1f);
             }
         }
@@ -89,7 +92,7 @@ public class MManager {
     public void onStart(Player p) {
         if (!getPls().contains(p.getUniqueId()) || isStarted()) return;
         if (getPls().size() < 3) {
-            p.sendMessage(getMurder() + "§cIl faut au minimum 3 joueurs pour lancer une partie ! §7(§e" + getPls().size() + "§7/§63§7)");
+            p.sendMessage(getMurder() + "§cɪʟ ғᴀᴜᴛ ᴀᴜ ᴍɪɴɪᴍᴜᴍ 3 ᴊᴏᴜᴇᴜʀs ᴘᴏᴜʀ ʟᴀɴᴄᴇʀ ᴜɴᴇ ᴘᴀʀᴛɪᴇ ! §7(§e" + getPls().size() + "§7/§63§7)");
             return;
         }
 
@@ -102,7 +105,7 @@ public class MManager {
                     for (UUID id : getPls()) {
                         Player pls = Bukkit.getPlayer(id);
                         if (pls == null) continue;
-                        pls.sendMessage(getMurder() + "§aLa partie démarre dans §e" + timer + "§as !");
+                        pls.sendMessage(getMurder() + "§aʟᴀ ᴘᴀʀᴛɪᴇ ᴅᴇ́ᴍᴀʀʀᴇ ᴅᴀɴs §e" + timer + "§as !");
                         pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
                     }
                 }
@@ -112,7 +115,6 @@ public class MManager {
                         Player pls = Bukkit.getPlayer(id);
                         if (pls == null) continue;
                         pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
-                        pls.playSound(pls.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f);
                     }
                 }
 
@@ -143,7 +145,7 @@ public class MManager {
                     for (UUID id : savePls) {
                         Player pls = Bukkit.getPlayer(id);
                         if (pls == null) continue;
-                        pls.sendMessage(getMurder() + "§aLa partie se terminera dans §e" + timer + "§as !");
+                        pls.sendMessage(getMurder() + "§aʟᴀ ᴘᴀʀᴛɪᴇ sᴇ ᴛᴇʀᴍɪɴᴇʀᴀ ᴅᴀɴs §e" + timer + "§as !");
                         pls.playSound(pls.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.BLOCKS, 1f, 1f);
                     }
                     timer--;
@@ -175,8 +177,8 @@ public class MManager {
 
             pls.sendMessage(" ");
             pls.sendMessage("§c§l━━━━━━━━━━━━⚔━━━━━━━━━━━━");
-            pls.sendMessage("§e" + v.getName() + " §6a été attaqué(e) !");
-            pls.sendMessage("§6Il était §e" + getRole(v).getName());
+            pls.sendMessage("§e" + v.getName() + " §6ᴀ ᴇ́ᴛᴇ́ ᴀᴛᴛᴀǫᴜᴇ́(ᴇ) !");
+            pls.sendMessage("§6ɪʟ ᴇ́ᴛᴀɪᴛ §e" + getRole(v).getName());
             pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━━");
             pls.sendMessage(" ");
 
@@ -196,7 +198,7 @@ public class MManager {
             ItemMeta meta = haunt.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName("§8Malice");
-                meta.setLore(List.of("§7Hante un joueur pour les 10 prochaines secondes", "§7Usage §8| §fClique droit"));
+                meta.setLore(List.of("§7ʜᴀɴᴛᴇ ᴜɴ ᴊᴏᴜᴇᴜʀ ᴘᴏᴜʀ ʟᴇs 10 ᴘʀᴏᴄʜᴀɪɴᴇs sᴇᴄᴏɴᴅᴇs", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
                 meta.setEnchantmentGlintOverride(true);
                 haunt.setItemMeta(meta);
             }
@@ -206,7 +208,7 @@ public class MManager {
         }else {
             roleMap.remove(v.getUniqueId());
             v.setGameMode(GameMode.SPECTATOR);
-            p.sendMessage(getMurder() + "§eVous avez éliminé(e) §6" + v.getName());
+            p.sendMessage(getMurder() + "§eᴠᴏᴜs ᴀᴠᴇᴢ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) §6" + v.getName());
 
             morts.add(setCorps(v));
             death.add(v.getUniqueId());
@@ -225,8 +227,8 @@ public class MManager {
 
                 p.sendMessage(" ");
                 p.sendMessage("§2§l━━━━━━━━━━━━━━━━━━━━━━━━");
-                p.sendMessage("§a Les Innocents ont gagnés !");
-                p.sendMessage("§7 Le murder était §4§l" + getLastMurderName());
+                p.sendMessage("§a ʟᴇs ɪɴɴᴏᴄᴇɴᴛs ᴏɴᴛ ɢᴀɢɴᴇ́s !");
+                p.sendMessage("§7 ʟᴇ ᴍᴜʀᴅᴇʀ ᴇ́ᴛᴀɪᴛ §4§l" + getLastMurderName());
                 p.sendMessage("§2§l━━━━━━━━━━━━━━━━━━━━━━━━");
                 p.sendMessage(" ");
 
@@ -246,8 +248,8 @@ public class MManager {
 
                 p.sendMessage(" ");
                 p.sendMessage("§4§l━━━━━━━━━━━━━━━━━━━━━━━━");
-                p.sendMessage("§c Le Murder a gagné(e) !");
-                p.sendMessage("§7 Il s'agissait de §4§l" + murderName);
+                p.sendMessage("§c ʟᴇ ᴍᴜʀᴅᴇʀ ᴀ ɢᴀɢɴᴇ́(ᴇ) !");
+                p.sendMessage("§7 ɪʟ s'ᴀɢɪssᴀɪᴛ ᴅᴇ §4§l" + murderName);
                 p.sendMessage("§4§l━━━━━━━━━━━━━━━━━━━━━━━━");
                 p.sendMessage(" ");
 
@@ -323,7 +325,7 @@ public class MManager {
                     randomChest.setYaw(0);
 
                     Bukkit.getWorld("world").getBlockAt(randomChest).setType(Material.WARPED_SLAB);
-                    Bukkit.broadcastMessage("§aUn coffre vien d'apparaître !");
+                    Bukkit.broadcastMessage("§aᴜɴ ᴄᴏғғʀᴇ ᴠɪᴇɴᴛ ᴅ'ᴀᴘᴘᴀʀᴀɪ̂ᴛʀᴇ !");
                     Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f));
                 }
 
@@ -346,12 +348,12 @@ public class MManager {
             ItemStack sword = new ItemStack(Material.IRON_SWORD);
             ItemMeta swordMeta = sword.getItemMeta();
             if (swordMeta != null) {
-                swordMeta.setDisplayName("§c§l🔪 Poignard du Capitaine");
+                swordMeta.setDisplayName("§c§l🔪 ᴘᴏɪɢɴᴀʀᴅ ᴅᴜ ᴄᴀᴘɪᴛᴀɪɴᴇ");
                 swordMeta.setUnbreakable(true);
                 swordMeta.setCustomModelData(18);
                 sword.setItemMeta(swordMeta);
             }
-            p.getInventory().setItem(0, sword);
+            p.getInventory().setItem(1, sword);
 
         } else if (role == MRoles.PIRATE_FOU) {
             ItemStack sword = new ItemStack(Material.IRON_SWORD);
@@ -360,7 +362,7 @@ public class MManager {
                 swordMeta.setUnbreakable(true);
                 swordMeta.setCustomModelData(19);
                 swordMeta.setEnchantmentGlintOverride(true);
-                swordMeta.setDisplayName("§a§l⚔ Sabre du Pirate");
+                swordMeta.setDisplayName("§a§l⚔ sᴀʙʀᴇ ᴅᴜ ᴘɪʀᴀᴛᴇ");
                 sword.setItemMeta(swordMeta);
             }
 
@@ -369,12 +371,12 @@ public class MManager {
             ItemStack invis = new ItemStack(Material.AMETHYST_SHARD);
             ItemMeta invisMeta = invis.getItemMeta();
             if (invisMeta != null) {
-                invisMeta.setDisplayName("§fInvisibilité");
-                invisMeta.setLore(List.of("§7Un clique droit, et §fPOUF"));
+                invisMeta.setDisplayName("§fɪɴᴠɪsɪʙɪʟɪᴛᴇ́");
+                invisMeta.setLore(List.of("§7ᴜɴ ᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ, ᴇᴛ §ғᴘᴏᴜғ"));
                 invisMeta.setEnchantmentGlintOverride(true);
                 invis.setItemMeta(invisMeta);
             }
-            p.getInventory().addItem(invis);
+            p.getInventory().setItem(1, invis);
 
         } else if (role == MRoles.SIRENE) {
             ItemStack voice = new ItemStack(Material.SUNFLOWER);
@@ -382,7 +384,7 @@ public class MManager {
             if (vmeta != null) {
                 vmeta.setDisplayName("§dChant de la Sirène");
                 vmeta.setEnchantmentGlintOverride(true);
-                vmeta.setLore(List.of("§7Met slowness à tout les joueurs dans un rayon de 5 blocks pendant 10 secondes", "§7Usage §8| §fClique droit"));
+                vmeta.setLore(List.of("§7ᴍᴇᴛ sʟᴏᴡɴᴇss ᴀ̀ ᴛᴏᴜᴛ ʟᴇs ᴊᴏᴜᴇᴜʀs ᴅᴀɴs ᴜɴ ʀᴀʏᴏɴ ᴅᴇ 5 ʙʟᴏᴄᴋs ᴘᴇɴᴅᴀɴᴛ 10 sᴇᴄᴏɴᴅᴇs", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
                 vmeta.setCustomModelData(3);
                 voice.setItemMeta(vmeta);
             }
@@ -393,10 +395,10 @@ public class MManager {
             if (prisonMeta != null) {
                 prisonMeta.setDisplayName("§fPrison");
                 prisonMeta.setEnchantmentGlintOverride(true);
-                prisonMeta.setLore(List.of("§7Cet item te permet de priver la liberté d'autrui", "§7Usage §8| §fClique droit"));
+                prisonMeta.setLore(List.of("§7ᴄᴇᴛ ɪᴛᴇᴍ ᴛᴇ ᴘᴇʀᴍᴇᴛ ᴅᴇ ᴘʀɪᴠᴇʀ ʟᴀ ʟɪʙᴇʀᴛᴇ́ ᴅ'ᴀᴜᴛʀᴜɪ", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
                 prison.setItemMeta(prisonMeta);
             }
-            p.getInventory().addItem(prison);
+            p.getInventory().setItem(1, prison);
         }
 
         p.updateInventory();
@@ -436,7 +438,7 @@ public class MManager {
         ArmorStand as = p.getWorld().spawn(p.getLocation(), ArmorStand.class);
         as.setVisible(false);
         as.setGravity(false);
-        as.setCustomName("§cBUZZER D'URGENCE");
+        as.setCustomName("§c§lʙᴜᴢᴢᴇʀ ᴅ'ᴜʀɢᴇɴᴄᴇ");
         as.setCustomNameVisible(true);
     }
 
@@ -452,38 +454,74 @@ public class MManager {
 
     public void reuLogic(Player p){
         new BukkitRunnable() {
-            private int timer = 60;
+            private int timer = 61;
 
             @Override
             public void run() {
+
+                if (timer == 61){
+                    setReunion(true);
+                }
 
                 if (timer == 60){
                     for (UUID id : getPls()){
                         Player pls = Bukkit.getPlayer(id);
                         if (pls != null){
-                            setReunion(true);
+
+                            pls.getInventory().setItem(4, new ItemBuilder(Material.ECHO_SHARD).name("§9ᴄʜᴏɪsɪ ᴜɴᴇ ᴘᴇʀsᴏɴɴᴇ ᴘᴏᴜʀ ǫᴜɪ ᴠᴏᴛᴇʀ").build());
                             pls.teleport(new Location(pls.getWorld(), 27, -24, 64));
                         }
                     }
                 }
 
+                if (timer == 3){
+                    for (UUID id : getPls()){
+                        Player pls = Bukkit.getPlayer(id);
+                        if (pls != null){
+                            pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
+                            pls.sendMessage("§aʟᴇs ʀᴇ́sᴜʟᴛᴀᴛs ᴠᴏᴜs sᴇʀᴏɴᴛ ᴛʀᴀɴsᴍɪs ᴅ'ɪᴄ̧ɪ ᴘᴇᴜ !");
+                            pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
+                        }
+                    }
+                }
+
                 if (timer == 0){
-                    setReunion(false);
+                    UUID mostVoted = getVotes().values().stream()
+                            .max(Comparator.comparingInt(uuid -> Collections.frequency(getVotes().values(), uuid)))
+                            .orElse(null);
 
                     for (UUID uuid : getPls()){
                         Player pls = Bukkit.getPlayer(uuid);
                         if (pls != null){
-                            pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
-                            pls.sendMessage("§aLa réunion est maintenant terminée");
+
+                            if (mostVoted == null) continue;
+                            Player p = Bukkit.getPlayer(mostVoted);
+
+                            pls.sendMessage(" ");
+                            pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
+                            pls.sendMessage(p != null ? p.getName() +  " §6ᴀ̀ ᴇ́ᴛᴇ́ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) ʟᴏʀs ᴅᴇ sᴇ ᴄᴏɴsᴇɪʟ !" : "§cᴘᴇʀsᴏɴɴᴇ ɴ'ᴀ ᴇ́ᴛᴇ́ ᴇ́ʟɪᴍɪɴᴇ́ ᴅᴜʀᴀɴᴛ sᴇ ᴛᴏᴜʀ !");
+                            pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
+                            pls.sendMessage(" ");
+
+                            pls.getInventory().setItem(4, new ItemStack(Material.AIR));
+
                         }
                     }
+                    onKill(p, p);
+                    setReunion(false);
                     cancel();
+                    return;
                 }
 
                 for (UUID id : getPls()){
                     Player pls = Bukkit.getPlayer(id);
                     if (pls != null){
-                        ActionBar.send(pls, "§6Temps restant: §f" + timer);
+                        if (isReunion()){
+                            ActionBar.send(pls, "§6ᴛᴇᴍᴘs ʀᴇsᴛᴀɴᴛ: §f" + timer);
+                        }else {
+                            cancel();
+                            return;
+                        }
                     }
                 }
 
@@ -519,6 +557,7 @@ public class MManager {
         resetDeahtAS();
         murderP.clear();
         innocent.clear();
+        setReunion(false);
         detective.clear();
         Murder.getInstance().getmListener().resetFlags();
         resetChest();
@@ -543,18 +582,24 @@ public class MManager {
     }
 
     // Getters
-    public List<UUID> getPls() { return pls; }
     public boolean isReunion() {
         return reunion;
     }
     public List<UUID> getDeath() {
         return death;
     }
+    public List<UUID> getPls() { return pls; }
+    public List<UUID> getAvote() {
+        return avote;
+    }
     public boolean isStarted() { return started; }
     public String getMurder() { return "§cMurder: "; }
     public List<UUID> getMurderP() { return murderP; }
     public List<UUID> getInnocent() { return innocent; }
     public List<UUID> getDetective() { return detective; }
+    public HashMap<UUID, UUID> getVotes() {
+        return votes;
+    }
     public RankManager getRankManager() { return rankManager; }
     public String getLastMurderName() { return lastMurderName; }
     // Setters

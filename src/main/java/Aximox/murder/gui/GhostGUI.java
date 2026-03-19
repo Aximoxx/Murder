@@ -16,7 +16,7 @@ public class GhostGUI extends FastInv {
     private List<UUID> alive = new ArrayList<>();
 
     public GhostGUI(Player p) {
-        super(36, "§8Joueur à Hanter");
+        super(36, "§8ᴊᴏᴜᴇᴜʀ ᴀ̀ ʜᴀɴᴛᴇʀ");
 
         for (Player pls : Bukkit.getOnlinePlayers()){
             if (Murder.getInstance().getManager().getPls().contains(pls.getUniqueId())) {

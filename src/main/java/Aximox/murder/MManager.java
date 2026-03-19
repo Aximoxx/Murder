@@ -344,21 +344,23 @@ public class MManager {
             if (swordMeta != null) {
                 swordMeta.setDisplayName("§c§l🔪 Poignard du Capitaine");
                 swordMeta.setUnbreakable(true);
+                swordMeta.setCustomModelData(18);
                 sword.setItemMeta(swordMeta);
             }
             p.getInventory().setItem(0, sword);
 
         } else if (role == MRoles.PIRATE_FOU) {
-            ItemStack bow = new ItemStack(Material.WOODEN_SWORD);
-            ItemMeta bowMeta = bow.getItemMeta();
-            if (bowMeta != null) {
-                bowMeta.setUnbreakable(true);
-                bowMeta.setEnchantmentGlintOverride(true);
-                bowMeta.setDisplayName("§a§l⚔ Sabre du Pirate");
-                bow.setItemMeta(bowMeta);
+            ItemStack sword = new ItemStack(Material.IRON_SWORD);
+            ItemMeta swordMeta = sword.getItemMeta();
+            if (swordMeta != null) {
+                swordMeta.setUnbreakable(true);
+                swordMeta.setCustomModelData(19);
+                swordMeta.setEnchantmentGlintOverride(true);
+                swordMeta.setDisplayName("§a§l⚔ Sabre du Pirate");
+                sword.setItemMeta(swordMeta);
             }
 
-            p.getInventory().setItem(0, bow);
+            p.getInventory().setItem(0, sword);
         } else if (role == MRoles.CLANDESTIN) {
             ItemStack invis = new ItemStack(Material.AMETHYST_SHARD);
             ItemMeta invisMeta = invis.getItemMeta();

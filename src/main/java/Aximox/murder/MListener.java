@@ -398,7 +398,7 @@ public class MListener implements Listener {
 
             Material hand = attacker.getInventory().getItemInMainHand().getType();
 
-            if (hand != Material.IRON_SWORD && hand != Material.WOODEN_SWORD) {
+            if (hand != Material.IRON_SWORD) {
                 e.setCancelled(true);
                 return;
             }

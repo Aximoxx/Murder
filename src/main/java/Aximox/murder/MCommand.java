@@ -2,6 +2,7 @@ package Aximox.murder;
 
 import Aximox.murder.grade.MGrades;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.command.Command;
@@ -9,6 +10,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -92,10 +95,50 @@ public class MCommand implements CommandExecutor, TabCompleter {
             } else if (args[0].equalsIgnoreCase("clearAS")) {
                 Murder.getInstance().getManager().resetDeahtAS();
                 return true;
+            } else if (args[0].equalsIgnoreCase("give")) {
+                if (args.length < 2){
+                    p.sendMessage("pas d'arguments");
+                    return true;
+                }
+
+                if (args[1].equalsIgnoreCase("capitaine")) {
+                    p.getInventory().addItem(getDagger());
+
+                    return true;
+                } else if (args[1].equalsIgnoreCase("pirate")) {
+                    p.getInventory().setItem(0, getSaber());
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    private ItemStack getDagger() {
+        ItemStack dagger = new ItemStack(Material.IRON_SWORD);
+        ItemMeta meta = dagger.getItemMeta();
+        if (meta != null) {
+            meta.setUnbreakable(true);
+            meta.setCustomModelData(18);
+            meta.setEnchantmentGlintOverride(true);
+            meta.setDisplayName("§c§l🔪 Poignard du Capitaine");
+            dagger.setItemMeta(meta);
+        }
+        return dagger;
+    }
+
+    private ItemStack getSaber() {
+        ItemStack saber = new ItemStack(Material.IRON_SWORD);
+        ItemMeta meta = saber.getItemMeta();
+        if (meta != null) {
+            meta.setUnbreakable(true);
+            meta.setCustomModelData(19);
+            meta.setEnchantmentGlintOverride(true);
+            meta.setDisplayName("§a§l⚔ Sabre du Pirate");
+            saber.setItemMeta(meta);
+        }
+        return saber;
     }
 
     @Override

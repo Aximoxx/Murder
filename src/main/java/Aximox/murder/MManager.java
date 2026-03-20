@@ -575,17 +575,18 @@ public class MManager {
      * Cette méthode sert à remettre le jeu de 0.
      **/
     public void reset() {
-        death.clear();
-        resetDeahtAS();
-        murderP.clear();
-        innocent.clear();
-        setReunion(false);
-        detective.clear();
-        Murder.getInstance().getmListener().resetFlags();
         resetChest();
-        roleMap.clear();
-        started = false;
-        lastMurderName = "§c⚔️ Inconnu";
+        resetDeahtAS();
+        setReunion(false);
+        setStarted(false);
+        getDeath().clear();
+        getRoleMap().clear();
+        getMurderP().clear();
+        getInnocent().clear();
+        getDetective().clear();
+        getHasBuzzed().clear();
+        setLastMurderName("§c⚔️ Inconnu");
+        Murder.getInstance().getmListener().resetFlags();
     }
 
     public void resetChest() {
@@ -625,6 +626,9 @@ public class MManager {
         return hasBuzzed;
     }
     public List<UUID> getDetective() { return detective; }
+    public Map<UUID, MRoles> getRoleMap() {
+        return roleMap;
+    }
     public RankManager getRankManager() { return rankManager; }
     public String getLastMurderName() { return lastMurderName; }
     // Setters
@@ -632,5 +636,9 @@ public class MManager {
     public void setStarted(boolean started) { this.started = started; }
     public void setReunion(boolean reunion) {
         this.reunion = reunion;
+    }
+
+    public void setLastMurderName(String lastMurderName) {
+        this.lastMurderName = lastMurderName;
     }
 }

@@ -346,60 +346,20 @@ public class MManager {
         p.getInventory().clear();
 
         if (role == MRoles.CAPITAINE) {
-            ItemStack sword = new ItemStack(Material.IRON_SWORD);
-            ItemMeta swordMeta = sword.getItemMeta();
-            if (swordMeta != null) {
-                swordMeta.setDisplayName("§c§l🔪 ᴘᴏɪɢɴᴀʀᴅ ᴅᴜ ᴄᴀᴘɪᴛᴀɪɴᴇ");
-                swordMeta.setUnbreakable(true);
-                swordMeta.setCustomModelData(18);
-                sword.setItemMeta(swordMeta);
-            }
-            p.getInventory().setItem(1, sword);
+            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().dagger());
 
         } else if (role == MRoles.PIRATE_FOU) {
-            ItemStack sword = new ItemStack(Material.IRON_SWORD);
-            ItemMeta swordMeta = sword.getItemMeta();
-            if (swordMeta != null) {
-                swordMeta.setUnbreakable(true);
-                swordMeta.setCustomModelData(19);
-                swordMeta.setEnchantmentGlintOverride(true);
-                swordMeta.setDisplayName("§a§l⚔ sᴀʙʀᴇ ᴅᴜ ᴘɪʀᴀᴛᴇ");
-                sword.setItemMeta(swordMeta);
-            }
+            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().sabre());
 
-            p.getInventory().setItem(0, sword);
         } else if (role == MRoles.CLANDESTIN) {
-            ItemStack invis = new ItemStack(Material.AMETHYST_SHARD);
-            ItemMeta invisMeta = invis.getItemMeta();
-            if (invisMeta != null) {
-                invisMeta.setDisplayName("§fɪɴᴠɪsɪʙɪʟɪᴛᴇ́");
-                invisMeta.setLore(List.of("§7ᴜɴ ᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ, ᴇᴛ §ғᴘᴏᴜғ"));
-                invisMeta.setEnchantmentGlintOverride(true);
-                invis.setItemMeta(invisMeta);
-            }
-            p.getInventory().setItem(1, invis);
+            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().furtivite());
 
         } else if (role == MRoles.SIRENE) {
-            ItemStack voice = new ItemStack(Material.SUNFLOWER);
-            ItemMeta vmeta = voice.getItemMeta();
-            if (vmeta != null) {
-                vmeta.setDisplayName("§dChant de la Sirène");
-                vmeta.setEnchantmentGlintOverride(true);
-                vmeta.setLore(List.of("§7ᴍᴇᴛ sʟᴏᴡɴᴇss ᴀ̀ ᴛᴏᴜᴛ ʟᴇs ᴊᴏᴜᴇᴜʀs ᴅᴀɴs ᴜɴ ʀᴀʏᴏɴ ᴅᴇ 5 ʙʟᴏᴄᴋs ᴘᴇɴᴅᴀɴᴛ 10 sᴇᴄᴏɴᴅᴇs", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
-                vmeta.setCustomModelData(3);
-                voice.setItemMeta(vmeta);
-            }
-            p.getInventory().addItem(voice);
+            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().sirene());
+
         } else if (role == MRoles.FRONTIERE) {
-            ItemStack prison = new ItemStack(Material.IRON_BARS);
-            ItemMeta prisonMeta = prison.getItemMeta();
-            if (prisonMeta != null) {
-                prisonMeta.setDisplayName("§fPrison");
-                prisonMeta.setEnchantmentGlintOverride(true);
-                prisonMeta.setLore(List.of("§7ᴄᴇᴛ ɪᴛᴇᴍ ᴛᴇ ᴘᴇʀᴍᴇᴛ ᴅᴇ ᴘʀɪᴠᴇʀ ʟᴀ ʟɪʙᴇʀᴛᴇ́ ᴅ'ᴀᴜᴛʀᴜɪ", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
-                prison.setItemMeta(prisonMeta);
-            }
-            p.getInventory().setItem(1, prison);
+            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().prison());
+
         }
 
         p.updateInventory();

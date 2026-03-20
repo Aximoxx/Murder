@@ -25,6 +25,7 @@ public class MManager {
     private HashMap<UUID, UUID> votes = new HashMap<>();
     private final List<UUID> murderP = new ArrayList<>();
     private final List<UUID> innocent = new ArrayList<>();
+    private final List<UUID> hasBuzzed = new ArrayList<>();
     private final List<UUID> detective = new ArrayList<>();
     private final List<ArmorStand> morts = new ArrayList<>();
     private final Map<UUID, MRoles> roleMap = new HashMap<>();
@@ -485,30 +486,8 @@ public class MManager {
                     }
                 }
 
-                if (timer == 0){
-                    UUID mostVoted = getVotes().values().stream()
-                            .max(Comparator.comparingInt(uuid -> Collections.frequency(getVotes().values(), uuid)))
-                            .orElse(null);
-
-                    for (UUID uuid : getPls()){
-                        Player pls = Bukkit.getPlayer(uuid);
-                        if (pls != null){
-
-                            if (mostVoted == null) continue;
-                            Player p = Bukkit.getPlayer(mostVoted);
-
-                            pls.sendMessage(" ");
-                            pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
-                            pls.sendMessage(p != null ? p.getName() +  " §6ᴀ̀ ᴇ́ᴛᴇ́ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) ʟᴏʀs ᴅᴇ sᴇ ᴄᴏɴsᴇɪʟ !" : "§cᴘᴇʀsᴏɴɴᴇ ɴ'ᴀ ᴇ́ᴛᴇ́ ᴇ́ʟɪᴍɪɴᴇ́ ᴅᴜʀᴀɴᴛ sᴇ ᴛᴏᴜʀ !");
-                            pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
-                            pls.sendMessage(" ");
-
-                            pls.getInventory().setItem(4, new ItemStack(Material.AIR));
-
-                        }
-                    }
-                    onKill(p, p);
-                    setReunion(false);
+                if (timer == 0) {
+                    endVote();
                     cancel();
                     return;
                 }
@@ -528,6 +507,49 @@ public class MManager {
                 timer--;
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20L);
+    }
+
+    public void endVote() {
+        if (!isReunion()) return;
+
+        UUID mostVoted = getVotes().values().stream()
+                .max(Comparator.comparingInt(uuid -> Collections.frequency(getVotes().values(), uuid)))
+                .orElse(null);
+
+        for (UUID uuid : getPls()) {
+            Player pls = Bukkit.getPlayer(uuid);
+            if (pls == null) continue;
+
+            pls.getInventory().setItem(4, new ItemStack(Material.AIR));
+
+            if (mostVoted == null || getVotes().isEmpty()) {
+                pls.sendMessage(" ");
+                pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
+                pls.sendMessage("§cᴘᴇʀsᴏɴɴᴇ ɴ'ᴀ ᴠᴏᴛᴇ́, ᴘᴇʀsᴏɴɴᴇ ɴ'ᴇsᴛ ᴇ́ʟɪᴍɪɴᴇ́ !");
+                pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
+                pls.sendMessage(" ");
+            } else {
+                Player mostVotedPlayer = Bukkit.getPlayer(mostVoted);
+                pls.sendMessage(" ");
+                pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
+                pls.sendMessage(mostVotedPlayer != null
+                        ? "§e" + mostVotedPlayer.getName() + " §6ᴀ̀ ᴇ́ᴛᴇ́ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) ʟᴏʀs ᴅᴇ ᴄᴇ ᴄᴏɴsᴇɪʟ !"
+                        : "§cᴇʀʀᴇᴜʀ : ʟᴇ ᴊᴏᴜᴇᴜʀ ɴ'ᴇsᴛ ᴘʟᴜs ʟᴀ̀");
+                pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
+                pls.sendMessage(" ");
+            }
+        }
+
+        if (mostVoted != null && !getVotes().isEmpty()) {
+            Player mostVotedPlayer = Bukkit.getPlayer(mostVoted);
+            if (mostVotedPlayer != null) {
+                onKill(mostVotedPlayer, mostVotedPlayer);
+            }
+        }
+
+        getVotes().clear();
+        getAvote().clear();
+        setReunion(false);
     }
 
     /**
@@ -589,6 +611,9 @@ public class MManager {
         return death;
     }
     public List<UUID> getPls() { return pls; }
+    public HashMap<UUID, UUID> getVotes() {
+        return votes;
+    }
     public List<UUID> getAvote() {
         return avote;
     }
@@ -596,10 +621,10 @@ public class MManager {
     public String getMurder() { return "§cMurder: "; }
     public List<UUID> getMurderP() { return murderP; }
     public List<UUID> getInnocent() { return innocent; }
-    public List<UUID> getDetective() { return detective; }
-    public HashMap<UUID, UUID> getVotes() {
-        return votes;
+    public List<UUID> getHasBuzzed() {
+        return hasBuzzed;
     }
+    public List<UUID> getDetective() { return detective; }
     public RankManager getRankManager() { return rankManager; }
     public String getLastMurderName() { return lastMurderName; }
     // Setters

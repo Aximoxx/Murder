@@ -16,6 +16,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -130,6 +131,14 @@ public class MListener implements Listener {
             }
 
             else if (block.getType() == Material.MANGROVE_BUTTON) {
+
+                if (manager.getHasBuzzed().contains(p.getUniqueId())) {
+                    p.sendMessage("§aᴠᴏᴜs ᴀᴠᴇᴢ ᴅᴇ́ᴊᴀ̀ ᴜᴛɪʟɪsᴇ́ ʟᴇ ʙᴜᴢᴢᴇʀ !");
+                    return;
+                }
+
+                manager.getHasBuzzed().add(p.getUniqueId());
+
                 for (UUID id : manager.getPls()){
                     Player pls = Bukkit.getPlayer(id);
                     if (pls != null) {
@@ -207,12 +216,20 @@ public class MListener implements Listener {
                             Murder.getInstance().getRankManager().removeRank(p.getUniqueId());
                             p.sendMessage("§7ᴛᴜ ᴇsᴛ ɪɴᴠɪsɪʙʟᴇ ᴘᴏᴜʀ ʟᴇs 10 ᴘʀᴏᴄʜᴀɪɴᴇs sᴇᴄᴏɴᴅᴇs !");
                             p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 200, 1));
-                            p.setInvisible(true);
+
+                            for(Player pls : Bukkit.getOnlinePlayers()){
+                                pls.hidePlayer(Murder.getInstance(), p);
+                            }
+
                             setInvis(false);
                         }
 
                         if (timer == 30) {
-                            p.setInvisible(false);
+
+                            for (Player pls : Bukkit.getOnlinePlayers()){
+                                pls.showPlayer(Murder.getInstance(), p);
+                            }
+
                             p.sendMessage("§eᴛᴜ ᴇsᴛ ᴅᴇ ɴᴏᴜᴠᴇᴀᴜ ᴠɪsɪʙʟᴇ !");
                         }
 
@@ -251,26 +268,6 @@ public class MListener implements Listener {
     }
 
     /**
-     *La méthode qui servira pour les quêtes
-     */
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent e) {
-        Player p = e.getPlayer();
-        Block placed = e.getBlockPlaced();
-        Block against = e.getBlockAgainst();
-
-        if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted()) return;
-
-        if (e.getBlockPlaced().getType() != Material.LEVER) return;
-        if (e.getBlockAgainst().getType() != Material.IRON_BLOCK) return;
-
-        BlockFace face = against.getFace(placed);
-        if (face.equals(BlockFace.EAST) || face.equals(BlockFace.WEST)){
-            //Todo: trouver la suite
-        }
-    }
-
-    /**
      *La méthode qui gère le rôle du Fantôme
      */
     @EventHandler
@@ -297,6 +294,10 @@ public class MListener implements Listener {
 
             p.getInventory().setItem(4, new ItemStack(Material.AIR));
 
+            int alivePlayers = manager.getPls().size() - manager.getDeath().size();
+            if (manager.getVotes().size() >= alivePlayers) {
+                manager.endVote();
+            }
         }
 
         if (p.getOpenInventory().getTitle().equalsIgnoreCase("§8ᴊᴏᴜᴇᴜʀ ᴀ̀ ʜᴀɴᴛᴇʀ")){
@@ -318,6 +319,74 @@ public class MListener implements Listener {
             p.getInventory().clear();
             p.setInvisible(false);
             p.setGameMode(GameMode.SPECTATOR);
+        }
+    }
+
+    /**
+     *Les méthodes qui serviront pour les quêtes
+     */
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent e) {
+        Player p = e.getPlayer();
+        Block placed = e.getBlockPlaced();
+        Block against = e.getBlockAgainst();
+
+        if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted()) return;
+
+        if (e.getBlockPlaced().getType() != Material.LEVER) return;
+        if (e.getBlockAgainst().getType() != Material.IRON_BLOCK) return;
+
+        BlockFace face = against.getFace(placed);
+        if (face.equals(BlockFace.EAST) || face.equals(BlockFace.WEST)){
+            //Todo: trouver la suite
+        }
+    }
+
+    @EventHandler
+    public void onCanon(InventoryClickEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (e.getClickedInventory() == null) return;
+        if (e.getView().getTopInventory().getType() != InventoryType.DISPENSER) return;
+
+        if (e.getClickedInventory() == e.getView().getTopInventory()) {
+            ItemStack item = e.getCursor();
+            if (item == null || item.getType() == Material.AIR) return;
+            if (item.getType() != Material.PAPER) return;
+
+            if (manager.getHasBuzzed().contains(p.getUniqueId())){
+                manager.getHasBuzzed().remove(p.getUniqueId());
+
+                p.sendMessage("§eBRAVO ! §aTu peux maintenant ré-utiliser le Buzzer !");
+                p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+            }else {
+
+                new BukkitRunnable() {
+                    private int timer = 30;
+                    @Override
+                    public void run() {
+                        if (timer == 0 || manager.isReunion()){
+
+                            for (Player pls : Bukkit.getOnlinePlayers()){
+                                pls.showPlayer(Murder.getInstance(), p);
+                                p.sendMessage("§cVotre invisibilitée est terminé");
+                            }
+
+                            cancel();
+                            return;
+                        }
+
+                        for (Player pls : Bukkit.getOnlinePlayers()) {
+                            pls.hidePlayer(Murder.getInstance(), p);
+                        }
+
+                        ActionBar.send(p, "§aVous êtes invisible pendant encore: §e" + timer + "§a secondes !");
+                        timer--;
+                    }
+                }.runTaskTimer(Murder.getInstance(), 0, 20L);
+
+                p.sendMessage("§eBRAVO ! §aTu est complètement invisible pour les 30 prochaines secondes !");
+                p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+            }
         }
     }
 
@@ -496,6 +565,7 @@ public class MListener implements Listener {
     public boolean isInvis() {
         return invis;
     }
+
     public boolean isCell() {
         return cell;
     }

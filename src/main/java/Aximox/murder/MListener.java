@@ -15,6 +15,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.*;
@@ -130,7 +131,72 @@ public class MListener implements Listener {
                 }.runTaskTimer(Murder.getInstance(), 0, 20L);
             }
 
-            else if (block.getType() == Material.MANGROVE_BUTTON) {
+            if (block.getType() == Material.MOSS_CARPET){
+                if (manager.getRole(p) != MRoles.MATELOT){
+                    p.sendMessage("§6Ce n'est pas à toi de la faire, mais au §bMatelot §6!");
+                    p.sendMessage("§7Va le prévenir qu'il a loupé un endroit !");
+                    return;
+                }
+
+                if (p.getInventory().getItemInMainHand().getType() != Material.PAPER){
+                    p.sendMessage("§cTu as oublié ta serpillère");
+                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, SoundCategory.BLOCKS, 1f, 1f);
+                    return;
+                }
+
+                block.setType(Material.AIR);
+
+                int remainingMoss = 0;
+                for (Location moss : Murder.getInstance().getMoss()){
+                    if (moss.getBlock().getType() == Material.MOSS_CARPET){
+                        remainingMoss ++;
+                    }
+                }
+
+                if (remainingMoss == 0){
+                    p.sendMessage("§aBien Joué, tu as éliminé cette CRASSE !");
+                    p.sendMessage("§aToutes les saletés ont été nettoyées !");
+                    p.sendMessage("§7C'est le capitaine qui va être fier de toi !");
+
+                    if (manager.getHasBuzzed().contains(p.getUniqueId())){
+                        manager.getHasBuzzed().remove(p.getUniqueId());
+
+                        p.sendMessage("§eBRAVO ! §aTu peux maintenant ré-utiliser le Buzzer !");
+                        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+                    }else{
+                        manager.reward(p);
+                    }
+                } else {
+                    p.sendMessage("§aBien Joué, tu as éliminé cette CRASSE, plus que §e" + remainingMoss);
+                    p.sendMessage("c'est le capitaine qui va être fier de toi !");
+                }
+
+                remainingMoss = 0;
+            }
+
+            if (block.getType() == Material.GRANITE){
+                if (manager.getRole(p) != MRoles.CANONNIER){
+                    p.sendMessage("§cCOMMENT ???? Tu est pas censé y touché");
+                    return;
+                }
+
+                if (e.getItem() != Murder.getInstance().getCustomItems().canon()){
+                    p.sendMessage("§6Met le canon dedans débile !");
+                    return;
+                }
+
+                if (manager.getHasBuzzed().contains(p.getUniqueId())){
+                    manager.getHasBuzzed().remove(p.getUniqueId());
+
+                    p.sendMessage("§eBRAVO ! §aTu peux maintenant ré-utiliser le Buzzer !");
+                    p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+                }else {
+                    p.sendMessage("§aBravo ! Tu as charger le canon !");
+                    manager.reward(p);
+                }
+            }
+
+            if (block.getType() == Material.MANGROVE_BUTTON) {
 
                 if (manager.getHasBuzzed().contains(p.getUniqueId())) {
                     p.sendMessage("§aᴠᴏᴜs ᴀᴠᴇᴢ ᴅᴇ́ᴊᴀ̀ ᴜᴛɪʟɪsᴇ́ ʟᴇ ʙᴜᴢᴢᴇʀ !");
@@ -148,6 +214,10 @@ public class MListener implements Listener {
                 manager.reuLogic(p);
             }
         }
+
+        /**
+         * Écoute des Items
+         */
 
         ItemStack item = e.getItem();
         if (item == null) return;
@@ -167,7 +237,7 @@ public class MListener implements Listener {
             new GhostGUI(p).open(p);
 
         } else if (manager.getRole(p).equals(MRoles.SIRENE)) {
-            if (item.getType() == Material.SUNFLOWER) {
+            if (item.getType() == Material.PAPER) {
                 if (!isCharm()) return;
 
                 for (UUID id : manager.getPls()) {
@@ -338,55 +408,44 @@ public class MListener implements Listener {
 
         BlockFace face = against.getFace(placed);
         if (face.equals(BlockFace.EAST) || face.equals(BlockFace.WEST)){
-            //Todo: trouver la suite
+
+            if(p.getInventory().getItemInMainHand().getAmount() == 0){
+                p.sendMessage("§aBravo ! Tu as réparé(e) tous les Jetskis !");
+
+                manager.reward(p);
+            }else {
+                p.sendMessage("§aTu vois le nombre de levier dans ton inventaire, c'est le nombre de levier à placer");
+                p.sendMessage("§7Allez au travail !");
+
+                p.getInventory().getItemInMainHand().setAmount(p.getInventory().getItemInMainHand().getAmount() - 1);
+            }
         }
     }
 
     @EventHandler
-    public void onCanon(InventoryClickEvent e) {
-        if (!(e.getWhoClicked() instanceof Player p)) return;
-        if (e.getClickedInventory() == null) return;
-        if (e.getView().getTopInventory().getType() != InventoryType.DISPENSER) return;
+    public void onCraft(CraftItemEvent e){
+        Player p = (Player) e.getWhoClicked();
 
-        if (e.getClickedInventory() == e.getView().getTopInventory()) {
-            ItemStack item = e.getCursor();
-            if (item == null || item.getType() == Material.AIR) return;
-            if (item.getType() != Material.PAPER) return;
+        if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted() || manager.isReunion()) return;
 
-            if (manager.getHasBuzzed().contains(p.getUniqueId())){
-                manager.getHasBuzzed().remove(p.getUniqueId());
-
-                p.sendMessage("§eBRAVO ! §aTu peux maintenant ré-utiliser le Buzzer !");
-                p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
-            }else {
-
-                new BukkitRunnable() {
-                    private int timer = 30;
-                    @Override
-                    public void run() {
-                        if (timer == 0 || manager.isReunion()){
-
-                            for (Player pls : Bukkit.getOnlinePlayers()){
-                                pls.showPlayer(Murder.getInstance(), p);
-                                p.sendMessage("§cVotre invisibilitée est terminé");
-                            }
-
-                            cancel();
-                            return;
-                        }
-
-                        for (Player pls : Bukkit.getOnlinePlayers()) {
-                            pls.hidePlayer(Murder.getInstance(), p);
-                        }
-
-                        ActionBar.send(p, "§aVous êtes invisible pendant encore: §e" + timer + "§a secondes !");
-                        timer--;
-                    }
-                }.runTaskTimer(Murder.getInstance(), 0, 20L);
-
-                p.sendMessage("§eBRAVO ! §aTu est complètement invisible pour les 30 prochaines secondes !");
-                p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+        if (e.getRecipe().getResult() == Murder.getInstance().getCustomItems().fruit()){
+            if (manager.getRole(p) != MRoles.CUISINER){
+                p.sendMessage("§cCOMMENT ???? Ta pas le BAC cuisine pourtant");
+                return;
             }
+
+            p.sendMessage("§aBravo ! Tu as réussi à préparer ton plat !");
+            manager.reward(p);
+        }
+
+        if (e.getRecipe().getResult() != Murder.getInstance().getCustomItems().canon()){
+            if (manager.getRole(p) != MRoles.CANONNIER) {
+                p.sendMessage("§cCOMMENT ???? Seul le §8CANONNIER §ca le droit");
+                return;
+            }
+
+            p.sendMessage("§aBravo ! Tu as trouvé comment faire un boulet, maintenant, va charger un canon !");
+            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1, 1);
         }
     }
 
@@ -427,7 +486,7 @@ public class MListener implements Listener {
 
         if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted() || manager.isReunion()) return;
         if (!manager.getRole(p).equals(MRoles.FRONTIERE)) return;
-        if (p.getInventory().getItemInMainHand().getType() != Material.IRON_BARS) return;
+        if (p.getInventory().getItemInMainHand().getType() != Material.PAPER) return;
         if (!isCell()) return;
 
         e.setCancelled(true);

@@ -8,3 +8,5 @@ commands:
     description: Défini le status des joueurs.
   murder:
     description: fait toute les commandes du murder
+  doc:
+    description: donne le doc

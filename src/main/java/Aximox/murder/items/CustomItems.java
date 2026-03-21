@@ -23,6 +23,30 @@ public class CustomItems {
         return lever;
     }
 
+    public ItemStack canon(){
+        ItemStack canon = new ItemStack(Material.GUNPOWDER);
+        ItemMeta meta = canon.getItemMeta();
+        if (meta != null) {
+            meta.setCustomModelData(21);
+            meta.setDisplayName("§8Boulet de Canon");
+            meta.setLore(List.of("§7Peut seulement être placé dans un Dispenser"));
+            canon.setItemMeta(meta);
+        }
+        return canon;
+    }
+
+    public ItemStack fruit(){
+        ItemStack fruit = new ItemStack(Material.PAPER);
+        ItemMeta meta = fruit.getItemMeta();
+        if (meta != null) {
+            meta.setCustomModelData(21);
+            meta.setDisplayName("§dGOMU GOMU NO MI");
+            meta.setEnchantmentGlintOverride(true);
+            fruit.setItemMeta(meta);
+        }
+        return fruit;
+    }
+
     /**
      * LES ITEMS QUI SONT DESTINEE AUX LES RÔLES
      */
@@ -31,10 +55,11 @@ public class CustomItems {
      * Item pour le rôle P.A.F (Permet de mettre en prison un joueur)
      */
     public ItemStack prison(){
-        ItemStack prison = new ItemStack(Material.IRON_BARS);
+        ItemStack prison = new ItemStack(Material.PAPER);
         ItemMeta prisonMeta = prison.getItemMeta();
         if (prisonMeta != null) {
-            prisonMeta.setDisplayName("§fPrison");
+            prisonMeta.setCustomModelData(17);
+            prisonMeta.setDisplayName("§eSifflet");
             prisonMeta.setEnchantmentGlintOverride(true);
             prisonMeta.setLore(List.of("§7ᴄᴇᴛ ɪᴛᴇᴍ ᴛᴇ ᴘᴇʀᴍᴇᴛ ᴅᴇ ᴘʀɪᴠᴇʀ ʟᴀ ʟɪʙᴇʀᴛᴇ́ ᴅ'ᴀᴜᴛʀᴜɪ", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
             prison.setItemMeta(prisonMeta);
@@ -43,12 +68,29 @@ public class CustomItems {
     }
 
     /**
+     * Item pour le rôle Matelot (Permet de nettoyer la saleté)
+     */
+
+    public ItemStack bross(){
+        ItemStack bross = new ItemStack(Material.PAPER);
+        ItemMeta brossMeta = bross.getItemMeta();
+        if (brossMeta != null) {
+            brossMeta.setCustomModelData(23);
+            brossMeta.setDisplayName("§fLa Serpillère");
+            brossMeta.setLore(List.of("§7À utiliser sur la saleté !", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
+            bross.setItemMeta(brossMeta);
+        }
+        return bross;
+    }
+
+    /**
      * Item pour le rôle Sirène (Permet de mettre slowness au joueur proche)
      */
     public ItemStack sirene(){
-        ItemStack voice = new ItemStack(Material.SUNFLOWER);
+        ItemStack voice = new ItemStack(Material.PAPER);
         ItemMeta vmeta = voice.getItemMeta();
         if (vmeta != null) {
+            vmeta.setCustomModelData(16);
             vmeta.setDisplayName("§dChant de la Sirène");
             vmeta.setEnchantmentGlintOverride(true);
             vmeta.setLore(List.of("§7ᴍᴇᴛ sʟᴏᴡɴᴇss ᴀ̀ ᴛᴏᴜᴛ ʟᴇs ᴊᴏᴜᴇᴜʀs ᴅᴀɴs ᴜɴ ʀᴀʏᴏɴ ᴅᴇ 5 ʙʟᴏᴄᴋs ᴘᴇɴᴅᴀɴᴛ 10 sᴇᴄᴏɴᴅᴇs", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));

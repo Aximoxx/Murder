@@ -1,3 +1,4 @@
+Aximox\murder\MManager$5.class
 Aximox\murder\gui\VoteGUI.class
 Aximox\murder\grade\RankManager.class
 Aximox\murder\MListener$3.class
@@ -7,11 +8,13 @@ Aximox\murder\utils\FastInvManager$InventoryListener.class
 Aximox\murder\MRoles.class
 Aximox\murder\utils\ItemBuilder$Unsafe$ReflectionUtils.class
 Aximox\murder\utils\ItemBuilder$Unsafe.class
+Aximox\murder\items\CustomCrafts.class
 Aximox\murder\items\CustomItems.class
 Aximox\murder\gui\GhostGUI.class
 Aximox\murder\MManager$1.class
 Aximox\murder\MListener$1.class
 Aximox\murder\MManager$3.class
+Aximox\murder\MManager$6.class
 Aximox\murder\MListener$4.class
 Aximox\murder\MManager$4.class
 Aximox\murder\utils\ActionBar$1.class
@@ -23,4 +26,5 @@ Aximox\murder\MManager$2.class
 Aximox\murder\utils\ItemBuilder.class
 Aximox\murder\Murder.class
 Aximox\murder\MCommand.class
+Aximox\murder\MManager$7.class
 Aximox\murder\MManager.class

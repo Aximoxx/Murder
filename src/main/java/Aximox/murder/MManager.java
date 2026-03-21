@@ -269,7 +269,7 @@ public class MManager {
         roleList.add(MRoles.CLANDESTIN);
 
         for (int i = 2; i < pls.size(); i++) {
-            if (i == 6) {
+            if (i == 2) {
                 roleList.add(MRoles.SIRENE);
             } else if (i == 3) {
                 roleList.add(MRoles.CLANDESTIN);
@@ -277,11 +277,13 @@ public class MManager {
                 roleList.add(MRoles.TRESOR);
             } else if (i == 5) {
                 roleList.add(MRoles.FANTOME);
-            } else if (i == 2) {
+            } else if (i == 6) {
                 roleList.add(MRoles.FRONTIERE);
             } else {
                 roleList.add(MRoles.PASSAGER);
             }
+
+            // TODO: Faire la distribution des rôles
         }
 
         Collections.shuffle(roleList);
@@ -291,6 +293,8 @@ public class MManager {
             MRoles role = roleList.get(i);
 
             roleMap.put(joueur, role);
+
+            // TODO: Refaire la condition de win
 
             if (role == MRoles.CAPITAINE) {
                 murderP.add(joueur);
@@ -339,29 +343,77 @@ public class MManager {
         }.runTaskTimer(Murder.getInstance(), 0, 20L);
     }
 
+    public void spawnMoss() {
+        new BukkitRunnable() {
+            private int timer = 6;
+
+            @Override
+            public void run() {
+                if (timer <= 6 && timer >= 1){
+                    List<Location> moss = Murder.getInstance().getMoss();
+                    Location randomMoss = moss.get(new Random().nextInt(moss.size()));
+
+                    Bukkit.getWorld("world").getBlockAt(randomMoss).getType().equals(Material.MOSS_CARPET);
+                }
+
+                if (timer == 0){
+                    Bukkit.getLogger().info("§aLe spawn des moss c'est bien passé");
+                    cancel();
+                    return;
+                }
+
+                timer--;
+            }
+        }.runTaskTimer(Murder.getInstance(), 0, 5L);
+    }
+
     /**
      * Cette méthode sert à distribuer les items aux rôles.
      **/
     public void giveItems(Player p, MRoles role) {
         p.getInventory().clear();
 
-        if (role == MRoles.CAPITAINE) {
-            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().dagger());
+        switch (role){
 
-        } else if (role == MRoles.PIRATE_FOU) {
-            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().sabre());
+            case CAPITAINE:
+                p.getInventory().setItem(1, Murder.getInstance().getCustomItems().dagger());
+                break;
 
-        } else if (role == MRoles.CLANDESTIN) {
-            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().furtivite());
+            case CLANDESTIN:
+                p.getInventory().setItem(1, Murder.getInstance().getCustomItems().furtivite());
+                break;
 
-        } else if (role == MRoles.SIRENE) {
-            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().sirene());
+            case FRONTIERE:
+                p.getInventory().setItem(1, Murder.getInstance().getCustomItems().prison());
+                break;
 
-        } else if (role == MRoles.FRONTIERE) {
-            p.getInventory().setItem(1, Murder.getInstance().getCustomItems().prison());
+            case SIRENE:
+                p.getInventory().setItem(1, Murder.getInstance().getCustomItems().sirene());
+                break;
+
+            case PIRATE_FOU:
+                p.getInventory().setItem(1, Murder.getInstance().getCustomItems().sabre());
+                break;
+
+            case PASSAGER:
+                p.getInventory().setItem(9, new ItemStack(Material.CHORUS_FLOWER, 1));
+                p.getInventory().setItem(18, new ItemStack(Material.CHORUS_FRUIT, 7));
+                p.getInventory().setChestplate(new ItemStack(Material.STICK, 1));
+                break;
+            case CANONNIER:
+                p.getInventory().setHelmet(new ItemStack(Material.NETHERITE_INGOT, 6));
+                p.getInventory().setItem(8, new ItemStack(Material.IRON_BLOCK, 2));
+                p.getInventory().setItem(23,  new ItemStack(Material.GUNPOWDER, 1));
+                break;
+
+            case MATELOT:
+                p.getInventory().setItem(1, Murder.getInstance().getCustomItems().bross());
+                break;
+
+            default:
+                break;
 
         }
-
         p.updateInventory();
     }
 
@@ -383,6 +435,37 @@ public class MManager {
         pls.playSound(pls.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, SoundCategory.BLOCKS, 0.5f, 1f);
     }
 
+    public void reward(Player p){
+        p.getInventory().clear();
+
+        new BukkitRunnable() {
+            private int timer = 30;
+            @Override
+            public void run() {
+                if (timer == 0 || isReunion()){
+
+                    for (Player pls : Bukkit.getOnlinePlayers()){
+                        pls.showPlayer(Murder.getInstance(), p);
+                        p.sendMessage("§cVotre invisibilitée est terminé");
+                    }
+
+                    cancel();
+                    return;
+                }
+
+                for (Player pls : Bukkit.getOnlinePlayers()) {
+                    pls.hidePlayer(Murder.getInstance(), p);
+                }
+
+                ActionBar.send(p, "§aVous êtes invisible pendant encore: §e" + timer + "§a secondes !");
+                timer--;
+            }
+        }.runTaskTimer(Murder.getInstance(), 0, 20L);
+
+        p.sendMessage("§eBRAVO ! §aTu est complètement invisible pour les 30 prochaines secondes !");
+        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+    }
+
     public void setChest(Player p){
         if (!p.getWorld().equals(Bukkit.getWorld("world"))) return;
 
@@ -393,6 +476,18 @@ public class MManager {
         Murder.getInstance().saveConfig();
 
         p.sendMessage("§aLe coffre §b#" + chest + " §aà bien été ajouté au coordonée §bx: §f" + p.getLocation().getX() + "§f, §by: §f" + p.getLocation().getY() + "§f, §bz: §f" + p.getLocation().getZ());
+    }
+
+    public void setMoss(Player p){
+        if (!p.getWorld().equals(Bukkit.getWorld("world"))) return;
+
+        int moss = Murder.getInstance().getConfig().getInt("murder.mossCount", 0) + 1;
+
+        Murder.getInstance().getConfig().set("murder.mossCount", moss);
+        Murder.getInstance().getConfig().set("murder.moss" + moss, p.getLocation());
+        Murder.getInstance().saveConfig();
+
+        p.sendMessage("§aLa saletée §b#" + moss + " §aà bien été ajouté au coordonée §bx: §f" + p.getLocation().getX() + "§f, §by: §f" + p.getLocation().getY() + "§f, §bz: §f" + p.getLocation().getZ());
     }
 
     public void setBuzzer(Player p){
@@ -535,6 +630,7 @@ public class MManager {
      * Cette méthode sert à remettre le jeu de 0.
      **/
     public void reset() {
+        resetMoss();
         resetChest();
         resetDeahtAS();
         setReunion(false);
@@ -553,6 +649,14 @@ public class MManager {
         for (Location chest : Murder.getInstance().getChests()) {
             if (Bukkit.getWorld("world").getBlockAt(chest).getType() == Material.WARPED_SLAB) {
                 Bukkit.getWorld("world").getBlockAt(chest).setType(Material.AIR);
+            }
+        }
+    }
+
+    public void resetMoss() {
+        for (Location moss : Murder.getInstance().getChests()) {
+            if (Bukkit.getWorld("world").getBlockAt(moss).getType() == Material.MOSS_CARPET) {
+                Bukkit.getWorld("world").getBlockAt(moss).setType(Material.AIR);
             }
         }
     }

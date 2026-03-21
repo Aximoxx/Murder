@@ -1,6 +1,8 @@
 package Aximox.murder;
 
 import Aximox.murder.grade.MGrades;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -25,6 +27,14 @@ public class MCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender s, @NotNull Command c, @NotNull String label, String[] args) {
         if (!(s instanceof Player p)) {
             s.sendMessage(Murder.getInstance().getManager() + "§cSeuls les joueurs peuvent entrer des commandes");
+            return true;
+        }
+
+        if (c.getName().equalsIgnoreCase("doc")){
+            TextComponent docs = new TextComponent("§eClique ici pour accéder au doc !");
+            docs.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "http://broken.creatyc.com:2027/"));
+
+            p.spigot().sendMessage(docs);
             return true;
         }
 
@@ -71,74 +81,90 @@ public class MCommand implements CommandExecutor, TabCompleter {
         }
 
         else if (c.getName().equalsIgnoreCase("murder")) {
-            if (args.length < 1){
+            if (args.length < 1) {
                 p.sendMessage("pas d'arguments");
                 return true;
             }
 
+            switch (args[0]) {
 
-            if (args[0].equalsIgnoreCase("help")){
-                sendHelp(p);
-                return true;
-            }else if (args[0].equalsIgnoreCase("start")) {
-                Murder.getInstance().getManager().onStart(p);
-                return true;
-            }else if (args[0].equalsIgnoreCase("stop")) {
-                Murder.getInstance().getManager().onEnd();
-                return true;
-            } else if (args[0].equalsIgnoreCase("setchest")) {
-                Murder.getInstance().getManager().setChest(p);
-                return true;
-            } else if (args[0].equalsIgnoreCase("setbuzz")) {
-                Murder.getInstance().getManager().setBuzzer(p);
-                return true;
-            } else if (args[0].equalsIgnoreCase("clearAS")) {
-                Murder.getInstance().getManager().resetDeahtAS();
-                return true;
-            } else if (args[0].equalsIgnoreCase("give")) {
-                if (args.length < 2){
-                    p.sendMessage("pas d'arguments");
-                    return true;
-                }
+                case "help":
+                    sendHelp(p);
+                    break;
 
-                if (args[1].equalsIgnoreCase("capitaine")) {
-                    p.getInventory().addItem(getDagger());
+                case "start":
+                    Murder.getInstance().getManager().onStart(p);
+                    break;
 
-                    return true;
-                } else if (args[1].equalsIgnoreCase("pirate")) {
-                    p.getInventory().setItem(0, getSaber());
-                    return true;
-                }
+                case "stop":
+                    Murder.getInstance().getManager().onEnd();
+                    break;
+
+                case "setchest":
+                    Murder.getInstance().getManager().setChest(p);
+                    break;
+
+                case "setMoss":
+                    Murder.getInstance().getManager().setMoss(p);
+                    break;
+
+                case "setbuzz":
+                    Murder.getInstance().getManager().setBuzzer(p);
+                    break;
+
+                case "clearAS":
+                    Murder.getInstance().getManager().resetDeahtAS();
+                    break;
+
+                case "give":
+                    if (args.length < 2) {
+                        p.sendMessage("pas d'arguments");
+                        return true;
+                    }
+
+                    switch (args[1]) {
+                        case "capitaine":
+                            p.getInventory().addItem(Murder.getInstance().getCustomItems().dagger());
+                            break;
+
+                        case "pirate":
+                            p.getInventory().setItem(0, Murder.getInstance().getCustomItems().sabre());
+                            break;
+
+                        case "sirene":
+                            p.getInventory().addItem(Murder.getInstance().getCustomItems().sirene());
+                            break;
+
+                        case "fruit":
+                            p.getInventory().addItem(Murder.getInstance().getCustomItems().fruit());
+                            break;
+
+                        case "canon":
+                            p.getInventory().addItem(Murder.getInstance().getCustomItems().canon());
+                            break;
+
+                        case "sifflet":
+                            p.getInventory().addItem(Murder.getInstance().getCustomItems().prison());
+                            break;
+
+                        case "bross":
+                            p.getInventory().addItem(Murder.getInstance().getCustomItems().bross());
+                            break;
+
+                        default:
+                            sendItemHelp(p);
+                            break;
+                    }
+
+                    break;
+
+                default:
+                    sendHelp(p);
+                    break;
+
             }
         }
-
         return false;
-    }
-
-    private ItemStack getDagger() {
-        ItemStack dagger = new ItemStack(Material.IRON_SWORD);
-        ItemMeta meta = dagger.getItemMeta();
-        if (meta != null) {
-            meta.setUnbreakable(true);
-            meta.setCustomModelData(18);
-            meta.setEnchantmentGlintOverride(true);
-            meta.setDisplayName("§c§l🔪 Poignard du Capitaine");
-            dagger.setItemMeta(meta);
-        }
-        return dagger;
-    }
-
-    private ItemStack getSaber() {
-        ItemStack saber = new ItemStack(Material.IRON_SWORD);
-        ItemMeta meta = saber.getItemMeta();
-        if (meta != null) {
-            meta.setUnbreakable(true);
-            meta.setCustomModelData(19);
-            meta.setEnchantmentGlintOverride(true);
-            meta.setDisplayName("§a§l⚔ Sabre du Pirate");
-            saber.setItemMeta(meta);
-        }
-        return saber;
     }
 
     @Override
@@ -192,5 +218,30 @@ public class MCommand implements CommandExecutor, TabCompleter {
         p.sendMessage(" ");
         p.sendMessage("§b/epreuve §fclearas");
         p.sendMessage("§7Cette commande sert à §csupprimer §7les hologrames des corps !");
+    }
+
+    private void sendItemHelp(Player p){
+        p.sendMessage("§6§l=======§c+§6§l=======");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder give §fcapitaine");
+        p.sendMessage("§7Cette commande sert à give l'item du §cCapitaine !");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder give §fpirate");
+        p.sendMessage("§7Cette commande sert à give l'item du §6Pirate !");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder give §fsirene");
+        p.sendMessage("§7Cette commande sert à give l'item de la §dSirène §7!");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder give §fbross");
+        p.sendMessage("§7Cette commande sert à give l'item du §fMatelot §7!");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder give §ffruit");
+        p.sendMessage("§7Cette commande sert à give l'item du §cCuisiner §7!");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder give §fsifflet");
+        p.sendMessage("§7Cette commande sert à give l'item de la §1P§f.A.§cF §7!");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder give §fcanon");
+        p.sendMessage("§7Cette commande sert à give l'item du §cCanonnier !");
     }
 }

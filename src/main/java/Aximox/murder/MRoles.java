@@ -16,6 +16,14 @@ public enum MRoles {
     FANTOME("§8Fantome du Naufrage", "§7Tu peux hanter quelqu'un après ta mort."),
     CLANDESTIN("§7Passager Clandestin", "§7Tu as la possibilité de te cacher tout les 40 secondes"),
 
+    // Les rôles qui ont des quêtes
+    CANONNIER("§8Canonnier", "§7Tu doit apprendre à crée un boulet et le mettre dans un canon !"), // FINI A TESTE
+    MATELOT("§bMatelot", "§7Tu doit nettoyer le pont du bateau !"),
+    MARIN("§BMarin", "§7Tu doit apprendre à crée un boulet et le mettre dans un canon !"), // FINI A TESTER
+    MECANO("§7Mécano", "§7Tu dois réparer les Jetskis"), // FINI A TESTER
+    CUISINER("§6Cuisiner", "§7Tu doit faire à manger pour les Matelots !"), // FINI A TESTER
+    GABIER("§bGabier", "§7Tu dois diriger le bateau"),
+
     // Les rôles qui ne servent à rien
     JAMAL("§bJamal", "§7Tu doit tout faire pour que le bateau ne coule pas !"),
     PASSAGER("§aPassager", "§7Juste survie sah..");

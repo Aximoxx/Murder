@@ -1,6 +1,7 @@
 package Aximox.murder;
 
 import Aximox.murder.grade.RankManager;
+import Aximox.murder.items.CustomCrafts;
 import Aximox.murder.items.CustomItems;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -13,6 +14,7 @@ import java.util.Objects;
 public final class Murder extends JavaPlugin {
     private MManager manager;
     private MCommand mCommand;
+    private CustomCrafts crafts;
     private MListener mListener;
     private static Murder instance;
     private RankManager rankManager;
@@ -21,6 +23,12 @@ public final class Murder extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+
+        customItems = new CustomItems();
+
+        crafts = new CustomCrafts();
+        crafts.canon();
+        crafts.fruit();
 
         rankManager = new RankManager();
         getRankManager().loadRanks();
@@ -31,6 +39,7 @@ public final class Murder extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(mListener, this);
         Objects.requireNonNull(getCommand("setrank")).setExecutor(mCommand);
+        Objects.requireNonNull(getCommand("doc")).setExecutor(mCommand);
         Objects.requireNonNull(getCommand("murder")).setExecutor(mCommand);
     }
 
@@ -55,12 +64,26 @@ public final class Murder extends JavaPlugin {
 
         return chests;
     }
+    public List<Location> getMoss() {
+        List<Location> moss = new ArrayList<>();
+        int mossCount = Murder.getInstance().getConfig().getInt("murder.mossCount", 0);
+
+        for (int i = 1; i <= mossCount; i++) {
+            Location loc = (Location) Murder.getInstance().getConfig().get("murder.moss" + i);
+            if (loc != null) moss.add(loc);
+        }
+
+        return moss;
+    }
 
     public MManager getManager() {
         return manager;
     }
     public MCommand getmCommand() {
         return mCommand;
+    }
+    public CustomCrafts getCrafts() {
+        return crafts;
     }
     public MListener getmListener() {
         return mListener;

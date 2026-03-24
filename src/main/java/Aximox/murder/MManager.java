@@ -3,6 +3,9 @@ package Aximox.murder;
 import Aximox.murder.grade.MGrades;
 import Aximox.murder.grade.RankManager;
 import Aximox.murder.utils.ActionBar;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.PacketContainer;
 import fr.mrmicky.fastinv.ItemBuilder;
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
@@ -10,7 +13,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
@@ -22,7 +27,7 @@ public class MManager {
     private final List<UUID> pls = new ArrayList<>();
     private final List<UUID> death = new ArrayList<>();
     private final List<UUID> avote = new ArrayList<>();
-    private HashMap<UUID, UUID> votes = new HashMap<>();
+    private final HashMap<UUID, UUID> votes = new HashMap<>();
     private final List<UUID> murderP = new ArrayList<>();
     private final List<UUID> innocent = new ArrayList<>();
     private final List<UUID> hasBuzzed = new ArrayList<>();
@@ -30,6 +35,8 @@ public class MManager {
     private final List<ArmorStand> morts = new ArrayList<>();
     private final Map<UUID, MRoles> roleMap = new HashMap<>();
     private final RankManager rankManager = new RankManager();
+    private final Map<UUID, Set<UUID>> activeVigieHighlights = new HashMap<>();
+    private BukkitTask vigieTask;
 
     /**
      * Cette méthode sert à gérer les personnes qui rejoignent la partie.
@@ -102,39 +109,33 @@ public class MManager {
 
             @Override
             public void run() {
-                if (timer <= 5 && timer >= 0) {
+                if (timer > 0) {
                     for (UUID id : getPls()) {
                         Player pls = Bukkit.getPlayer(id);
                         if (pls == null) continue;
                         pls.sendMessage(getMurder() + "§aʟᴀ ᴘᴀʀᴛɪᴇ ᴅᴇ́ᴍᴀʀʀᴇ ᴅᴀɴs §e" + timer + "§as !");
                         pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
+                        if (timer == 1) pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
                     }
+                    timer--;
+                    return;
                 }
 
-                if (timer == 1){
-                    for (UUID id : getPls()) {
-                        Player pls = Bukkit.getPlayer(id);
-                        if (pls == null) continue;
-                        pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
-                    }
-                }
-
-                if (timer == 0){
-                    distributeRole(new ArrayList<>(getPls()));
-                    spawnChest();
-                    setStarted(true);
-                    cancel();
-                }
-                timer--;
+                setStarted(true);
+                for (Team team : Objects.requireNonNull(Bukkit.getScoreboardManager()).getMainScoreboard().getTeams())
+                    team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
+                distributeRole(new ArrayList<>(getPls()));
+                spawnChest();
+                spawnMoss();
+                startVigieTask();
+                cancel();
             }
         }.runTaskTimer(Murder.getInstance(), 0, 20);
     }
 
-    /**
-     * Cette méthode sert de logique de fin de partie.
-     **/
     public void onEnd() {
         if (!isStarted()) return;
+        stopVigieTask();
         List<UUID> savePls = new ArrayList<>(getPls());
 
         new BukkitRunnable() {
@@ -153,7 +154,8 @@ public class MManager {
                     return;
                 }
 
-                // timer == 0
+                for (Team team : Objects.requireNonNull(Bukkit.getScoreboardManager()).getMainScoreboard().getTeams())
+                    team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.ALWAYS);
                 for (UUID id : savePls) {
                     Player pls = Bukkit.getPlayer(id);
                     if (pls == null) continue;
@@ -161,7 +163,6 @@ public class MManager {
                     pls.setGameMode(GameMode.SURVIVAL);
                     pls.teleport(new Location(Bukkit.getWorld("world"), -47, 58, -278, 0f, 0f));
                 }
-
                 reset();
                 cancel();
             }
@@ -199,7 +200,7 @@ public class MManager {
             ItemMeta meta = haunt.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName("§8Malice");
-                meta.setLore(List.of("§7ʜᴀɴᴛᴇ ᴜɴ ᴊᴏᴜᴇᴜʀ ᴘᴏᴜʀ ʟᴇs 10 ᴘʀᴏᴄʜᴀɪɴᴇs sᴇᴄᴏɴᴅᴇs", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
+                meta.setLore(List.of("§7ʜᴀɴᴛᴇ ᴜɴ ᴊᴏᴜᴇᴜʀ ᴘᴏᴜʀ ʟᴇs 10 ᴘʀᴏᴄʜᴀɪɴᴇs sᴇᴄᴏɴᴅᴇs", "§7ᴜsᴀɢᴇ §8|§f ᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
                 meta.setEnchantmentGlintOverride(true);
                 haunt.setItemMeta(meta);
             }
@@ -209,9 +210,39 @@ public class MManager {
         }else {
             roleMap.remove(v.getUniqueId());
             v.setGameMode(GameMode.SPECTATOR);
-            p.sendMessage(getMurder() + "§eᴠᴏᴜs ᴀᴠᴇᴢ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) §6" + v.getName());
+            p.sendMessage(getMurder() + "§e ᴠᴏᴜs ᴀᴠᴇᴢ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) §6" + v.getName());
 
             morts.add(setCorps(v));
+            death.add(v.getUniqueId());
+            checkWin();
+        }
+    }
+
+    public void onReuKill(Player v) {
+        if (murderP.contains(v.getUniqueId())) {
+            lastMurderName = v.getName();
+            murderP.remove(v.getUniqueId());
+        } else {
+            innocent.remove(v.getUniqueId());
+            detective.remove(v.getUniqueId());
+        }
+
+        if (getRole(v) == MRoles.FANTOME) {
+            ItemStack haunt = new ItemStack(Material.WITHER_ROSE);
+            ItemMeta meta = haunt.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§8Malice");
+                meta.setLore(List.of("§7ʜᴀɴᴛᴇ ᴜɴ ᴊᴏᴜᴇᴜʀ ᴘᴏᴜʀ ʟᴇs 10 ᴘʀᴏᴄʜᴀɪɴᴇs sᴇᴄᴏɴᴅᴇs", "§7ᴜsᴀɢᴇ §8|§f ᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
+                meta.setEnchantmentGlintOverride(true);
+                haunt.setItemMeta(meta);
+            }
+            v.setInvisible(true);
+            v.setGameMode(GameMode.ADVENTURE);
+            v.getInventory().addItem(haunt);
+        }else {
+            roleMap.remove(v.getUniqueId());
+            v.setGameMode(GameMode.SPECTATOR);
+
             death.add(v.getUniqueId());
             checkWin();
         }
@@ -270,14 +301,16 @@ public class MManager {
 
         for (int i = 2; i < pls.size(); i++) {
             if (i == 2) {
-                roleList.add(MRoles.SIRENE);
-            } else if (i == 3) {
-                roleList.add(MRoles.CLANDESTIN);
+                roleList.add(MRoles.VIGIE);
             } else if (i == 4) {
-                roleList.add(MRoles.TRESOR);
+                roleList.add(MRoles.MECANO);
+            } else if (i == 3) {
+                roleList.add(MRoles.SIRENE);
             } else if (i == 5) {
-                roleList.add(MRoles.FANTOME);
+                roleList.add(MRoles.TRESOR);
             } else if (i == 6) {
+                roleList.add(MRoles.PIRATE_FOU);
+            } else if (i == 7) {
                 roleList.add(MRoles.FRONTIERE);
             } else {
                 roleList.add(MRoles.PASSAGER);
@@ -324,12 +357,19 @@ public class MManager {
                     cancel();
                 }
 
+                if (!isStarted()) return;
+
                 if (timer == 30 || timer == 60 || timer == 90){
                     List<Location> chest = Murder.getInstance().getChests();
+                    if (chest.isEmpty()) {
+                        Bukkit.getLogger().warning("Aucun coffre n'est configuré pour le Murder.");
+                        cancel();
+                        return;
+                    }
                     Location randomChest = chest.get(new Random().nextInt(chest.size()));
                     randomChest.setYaw(0);
 
-                    Bukkit.getWorld("world").getBlockAt(randomChest).setType(Material.WARPED_SLAB);
+                    Objects.requireNonNull(Bukkit.getWorld("world")).getBlockAt(randomChest).setType(Material.WARPED_SLAB);
                     Bukkit.broadcastMessage("§aᴜɴ ᴄᴏғғʀᴇ ᴠɪᴇɴᴛ ᴅ'ᴀᴘᴘᴀʀᴀɪ̂ᴛʀᴇ !");
                     Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f));
                 }
@@ -351,9 +391,14 @@ public class MManager {
             public void run() {
                 if (timer <= 6 && timer >= 1){
                     List<Location> moss = Murder.getInstance().getMoss();
+                    if (moss.isEmpty()) {
+                        Bukkit.getLogger().warning("Aucune mousse n'est configurée pour le Murder.");
+                        cancel();
+                        return;
+                    }
                     Location randomMoss = moss.get(new Random().nextInt(moss.size()));
 
-                    Bukkit.getWorld("world").getBlockAt(randomMoss).getType().equals(Material.MOSS_CARPET);
+                    Objects.requireNonNull(Bukkit.getWorld("world")).getBlockAt(randomMoss).setType(Material.MOSS_CARPET);
                 }
 
                 if (timer == 0){
@@ -395,15 +440,22 @@ public class MManager {
                 p.getInventory().setItem(1, Murder.getInstance().getCustomItems().sabre());
                 break;
 
-            case PASSAGER:
+            case CANONNIER:
+                p.getInventory().setItem(8, new ItemStack(Material.IRON_BLOCK, 2));
+                p.getInventory().setItem(23,  new ItemStack(Material.GUNPOWDER, 1));
+                p.getInventory().setItem(12, new ItemStack(Material.NETHERITE_INGOT, 6));
+                break;
+
+            case CUISINER:
                 p.getInventory().setItem(9, new ItemStack(Material.CHORUS_FLOWER, 1));
                 p.getInventory().setItem(18, new ItemStack(Material.CHORUS_FRUIT, 7));
                 p.getInventory().setChestplate(new ItemStack(Material.STICK, 1));
                 break;
-            case CANONNIER:
-                p.getInventory().setHelmet(new ItemStack(Material.NETHERITE_INGOT, 6));
-                p.getInventory().setItem(8, new ItemStack(Material.IRON_BLOCK, 2));
-                p.getInventory().setItem(23,  new ItemStack(Material.GUNPOWDER, 1));
+
+            case MECANO:
+                ItemStack lever = Murder.getInstance().getCustomItems().lever();
+                lever.setAmount(4);
+                p.getInventory().setItem(1, lever);
                 break;
 
             case MATELOT:
@@ -424,7 +476,7 @@ public class MManager {
         Player pls = Bukkit.getPlayer(p);
         assert pls != null;
 
-        if (!getPls().contains(pls.getUniqueId()) || !isStarted()) return;
+        if (!getPls().contains(pls.getUniqueId())) return;
 
         pls.sendMessage(" ");
         pls.sendMessage("§c⚔ §eTu est " + roles.getName());
@@ -443,10 +495,10 @@ public class MManager {
             @Override
             public void run() {
                 if (timer == 0 || isReunion()){
+                    p.sendMessage("§cVotre invisibilitée est terminé");
 
                     for (Player pls : Bukkit.getOnlinePlayers()){
                         pls.showPlayer(Murder.getInstance(), p);
-                        p.sendMessage("§cVotre invisibilitée est terminé");
                     }
 
                     cancel();
@@ -494,7 +546,7 @@ public class MManager {
         ArmorStand as = p.getWorld().spawn(p.getLocation(), ArmorStand.class);
         as.setVisible(false);
         as.setGravity(false);
-        as.setCustomName("§c§lʙᴜᴢᴢᴇʀ ᴅ'ᴜʀɢᴇɴᴄᴇ");
+        as.setCustomName("§c§l ʙᴜᴢᴢᴇʀ ᴅ'ᴜʀɢᴇɴᴄᴇ");
         as.setCustomNameVisible(true);
     }
 
@@ -508,7 +560,7 @@ public class MManager {
         return as;
     }
 
-    public void reuLogic(Player p){
+    public void reuLogic(){
         new BukkitRunnable() {
             private int timer = 61;
 
@@ -534,8 +586,7 @@ public class MManager {
                     for (UUID id : getPls()){
                         Player pls = Bukkit.getPlayer(id);
                         if (pls != null){
-                            pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
-                            pls.sendMessage("§aʟᴇs ʀᴇ́sᴜʟᴛᴀᴛs ᴠᴏᴜs sᴇʀᴏɴᴛ ᴛʀᴀɴsᴍɪs ᴅ'ɪᴄ̧ɪ ᴘᴇᴜ !");
+                            pls.sendMessage("§a ʟᴇs ʀᴇ́sᴜʟᴛᴀᴛs ᴠᴏᴜs sᴇʀᴏɴᴛ ᴛʀᴀɴsᴍɪs ᴅ'ɪᴄ̧ɪ ᴘᴇᴜ !");
                             pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
                         }
                     }
@@ -576,6 +627,8 @@ public class MManager {
             if (pls == null) continue;
 
             pls.getInventory().setItem(4, new ItemStack(Material.AIR));
+            pls.teleport(new Location(pls.getWorld(), 22, 16, 81));
+            pls.playSound(pls.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
 
             if (mostVoted == null || getVotes().isEmpty()) {
                 pls.sendMessage(" ");
@@ -588,8 +641,8 @@ public class MManager {
                 pls.sendMessage(" ");
                 pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
                 pls.sendMessage(mostVotedPlayer != null
-                        ? "§e" + mostVotedPlayer.getName() + " §6ᴀ̀ ᴇ́ᴛᴇ́ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) ʟᴏʀs ᴅᴇ ᴄᴇ ᴄᴏɴsᴇɪʟ !"
-                        : "§cᴇʀʀᴇᴜʀ : ʟᴇ ᴊᴏᴜᴇᴜʀ ɴ'ᴇsᴛ ᴘʟᴜs ʟᴀ̀");
+                        ? "§e" + mostVotedPlayer.getName() + " §6ᴀ̀ ᴇ́ᴛᴇ́ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) Isis ᴅᴇ ᴄᴇ ᴄᴏɴsᴇɪʟ !"
+                        : "§c ᴇʀʀᴇᴜʀ : ʟᴇ ᴊᴏᴜᴇᴜʀ ɴ'ᴇsᴛ ᴘʟᴜs ʟᴀ̀");
                 pls.sendMessage("§c§l━━━━━━━━━━━━━━━━━━━━━━━━");
                 pls.sendMessage(" ");
             }
@@ -598,7 +651,7 @@ public class MManager {
         if (mostVoted != null && !getVotes().isEmpty()) {
             Player mostVotedPlayer = Bukkit.getPlayer(mostVoted);
             if (mostVotedPlayer != null) {
-                onKill(mostVotedPlayer, mostVotedPlayer);
+                onReuKill(mostVotedPlayer);
             }
         }
 
@@ -626,13 +679,75 @@ public class MManager {
         p.setPlayerListName(rank.getPrefix() + p.getName());
     }
 
+
+    private void startVigieTask() {
+        stopVigieTask();
+
+        vigieTask = new BukkitRunnable() {
+
+            @Override
+            public void run() {
+                if (!isStarted()) {
+                    stopVigieTask();
+                    return;
+                }
+
+                pulseVigies();
+            }
+        }.runTaskTimer(Murder.getInstance(), 0L, 600L);
+    }
+
+    private void stopVigieTask() {
+        if (vigieTask != null) {
+            vigieTask.cancel();
+            vigieTask = null;
+        }
+    }
+
+    private void pulseVigies() {
+        for (UUID id : new ArrayList<>(getPls())) {
+            Player vigie = Bukkit.getPlayer(id);
+            if (!isActiveVigie(vigie)) continue;
+
+            for (UUID targetId : new ArrayList<>(getPls())) {
+                if (targetId.equals(id) || getDeath().contains(targetId)) continue;
+                Player target = Bukkit.getPlayer(targetId);
+
+                if (target == null
+                        || target.getGameMode() == GameMode.SPECTATOR
+                        || !target.getWorld().equals(vigie.getWorld())
+                        || vigie.getLocation().distanceSquared(target.getLocation()) > 100) continue;
+
+                sendGlowPacket(vigie, target);
+            }
+        }
+    }
+
+    private void sendGlowPacket(Player receiver, Player target) {
+        PacketContainer packet = ProtocolLibrary.getProtocolManager()
+                .createPacket(PacketType.Play.Server.ENTITY_EFFECT);
+
+        packet.getIntegers().write(0, target.getEntityId());
+        packet.getEffectTypes().write(0, PotionEffectType.GLOWING);
+        packet.getIntegers().write(1, 0);
+        packet.getIntegers().write(2, 620);
+        packet.getBytes().write(0, (byte) 0);
+
+        try {
+            ProtocolLibrary.getProtocolManager().sendServerPacket(receiver, packet);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Cette méthode sert à remettre le jeu de 0.
      **/
     public void reset() {
+        stopVigieTask();
         resetMoss();
         resetChest();
-        resetDeahtAS();
+        resetDeathAS();
         setReunion(false);
         setStarted(false);
         getDeath().clear();
@@ -647,21 +762,21 @@ public class MManager {
 
     public void resetChest() {
         for (Location chest : Murder.getInstance().getChests()) {
-            if (Bukkit.getWorld("world").getBlockAt(chest).getType() == Material.WARPED_SLAB) {
-                Bukkit.getWorld("world").getBlockAt(chest).setType(Material.AIR);
+            if (Objects.requireNonNull(Bukkit.getWorld("world")).getBlockAt(chest).getType() == Material.WARPED_SLAB) {
+                Objects.requireNonNull(Bukkit.getWorld("world")).getBlockAt(chest).setType(Material.AIR);
             }
         }
     }
 
     public void resetMoss() {
-        for (Location moss : Murder.getInstance().getChests()) {
-            if (Bukkit.getWorld("world").getBlockAt(moss).getType() == Material.MOSS_CARPET) {
-                Bukkit.getWorld("world").getBlockAt(moss).setType(Material.AIR);
+        for (Location moss : Murder.getInstance().getMoss()) {
+            if (Objects.requireNonNull(Bukkit.getWorld("world")).getBlockAt(moss).getType() == Material.MOSS_CARPET) {
+                Objects.requireNonNull(Bukkit.getWorld("world")).getBlockAt(moss).setType(Material.AIR);
             }
         }
     }
 
-    public void resetDeahtAS(){
+    public void resetDeathAS(){
         for (ArmorStand mort : morts){
             mort.remove();
         }
@@ -669,35 +784,56 @@ public class MManager {
     }
 
     // Getters
+    public List<UUID> getPls() { return pls; }
+    private boolean isActiveVigie(Player p) {
+        return p != null
+                && getPls().contains(p.getUniqueId())
+                && !getDeath().contains(p.getUniqueId())
+                && p.getGameMode() != GameMode.SPECTATOR
+                && getRole(p) == MRoles.VIGIE;
+    }
     public boolean isReunion() {
         return reunion;
     }
     public List<UUID> getDeath() {
         return death;
     }
-    public List<UUID> getPls() { return pls; }
-    public HashMap<UUID, UUID> getVotes() {
-        return votes;
-    }
     public List<UUID> getAvote() {
         return avote;
     }
     public boolean isStarted() { return started; }
-    public String getMurder() { return "§cMurder: "; }
-    public List<UUID> getMurderP() { return murderP; }
-    public List<UUID> getInnocent() { return innocent; }
+    public String getMurder() {
+        return "§cMurder: ";
+    }
+    public List<UUID> getMurderP() {
+        return murderP;
+    }
+    public List<UUID> getInnocent() {
+        return innocent;
+    }
+    public List<UUID> getDetective() {
+        return detective;
+    }
     public List<UUID> getHasBuzzed() {
         return hasBuzzed;
     }
-    public List<UUID> getDetective() { return detective; }
+    public HashMap<UUID, UUID> getVotes() {
+        return votes;
+    }
     public Map<UUID, MRoles> getRoleMap() {
         return roleMap;
     }
-    public RankManager getRankManager() { return rankManager; }
-    public String getLastMurderName() { return lastMurderName; }
+    public RankManager getRankManager() {
+        return rankManager;
+    }
+    public String getLastMurderName() {
+        return lastMurderName;
+    }
     // Setters
 
-    public void setStarted(boolean started) { this.started = started; }
+    public void setStarted(boolean started) {
+        this.started = started;
+    }
     public void setReunion(boolean reunion) {
         this.reunion = reunion;
     }

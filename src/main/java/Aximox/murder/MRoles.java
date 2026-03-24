@@ -11,17 +11,16 @@ public enum MRoles {
 
     // Les rôles que le méchant doit tuer
     PIRATE_FOU("§dPirate fou", "§7Tu as la possibilité d'éliminer un joueur de ton choix, si il est gentil, tu capoute !"),
-    VIGIE("§fLa vigie", "§7Tout les 30 secondes, tu aperçoit tout les joueurs dans un rayon de 10 blocs"), // À faire plus tards car gestion des paquets,
+    VIGIE("§fLa vigie", "§7Tout les 30 secondes, tu aperçoit tout les joueurs dans un rayon de 10 blocs"), // A DEBUG
     SIRENE("§dSirène", "§7Tu peux ralentir les joueurs que tu croise avec ton chant"),
     FANTOME("§8Fantome du Naufrage", "§7Tu peux hanter quelqu'un après ta mort."),
     CLANDESTIN("§7Passager Clandestin", "§7Tu as la possibilité de te cacher tout les 40 secondes"),
 
     // Les rôles qui ont des quêtes
-    CANONNIER("§8Canonnier", "§7Tu doit apprendre à crée un boulet et le mettre dans un canon !"), // FINI A TESTE
+    CANONNIER("§8Canonnier", "§7Tu doit apprendre à crée un boulet et le mettre dans un canon !"),
     MATELOT("§bMatelot", "§7Tu doit nettoyer le pont du bateau !"),
-    MARIN("§BMarin", "§7Tu doit apprendre à crée un boulet et le mettre dans un canon !"), // FINI A TESTER
-    MECANO("§7Mécano", "§7Tu dois réparer les Jetskis"), // FINI A TESTER
-    CUISINER("§6Cuisiner", "§7Tu doit faire à manger pour les Matelots !"), // FINI A TESTER
+    MECANO("§7Mécano", "§7Tu dois réparer les Jetskis"),
+    CUISINER("§6Cuisiner", "§7Tu doit faire à manger pour les Matelots !"),
     GABIER("§bGabier", "§7Tu dois diriger le bateau"),
 
     // Les rôles qui ne servent à rien

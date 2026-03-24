@@ -33,7 +33,7 @@ public class VoteGUI extends FastInv {
             ItemStack item = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) item.getItemMeta();
             if (meta != null) {
-                meta.setOwningPlayer((OfflinePlayer) pls.getPlayerProfile());
+                meta.setOwningPlayer(pls.getPlayer());
                 meta.setDisplayName("§e" + pls.getName());
                 item.setItemMeta(meta);
             }

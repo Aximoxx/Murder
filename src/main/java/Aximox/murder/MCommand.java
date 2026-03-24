@@ -4,7 +4,6 @@ import Aximox.murder.grade.MGrades;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.command.Command;
@@ -12,8 +11,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -38,7 +35,7 @@ public class MCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (Murder.getInstance().getRankManager().getRank(p.getUniqueId()).getPower() < 3 || !p.isOp()){
+        if (!p.isOp()){
             p.sendMessage("§cTu n'as pas le bon rôle, bozo le clown");
             return true;
         }

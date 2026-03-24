@@ -110,7 +110,7 @@ public class MCommand implements CommandExecutor, TabCompleter {
                     break;
 
                 case "clearAS":
-                    Murder.getInstance().getManager().resetDeahtAS();
+                    Murder.getInstance().getManager().resetDeathAS();
                     break;
 
                 case "give":

@@ -1,6 +1,7 @@
 package Aximox.murder;
 
 import Aximox.murder.grade.MGrades;
+import Aximox.murder.gui.CompoGUI;
 import Aximox.murder.gui.GhostGUI;
 import Aximox.murder.gui.VoteGUI;
 import Aximox.murder.utils.ActionBar;
@@ -17,6 +18,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
@@ -35,7 +37,7 @@ public class MListener implements Listener {
     private boolean charm = true;
     private boolean invis = true;
     private final MManager manager;
-    private List<UUID> cooldown = new ArrayList<>();
+    private final List<UUID> cooldown = new ArrayList<>();
 
     public MListener(MManager manager){
         this.manager = manager;
@@ -122,7 +124,7 @@ public class MListener implements Listener {
                             if (timer == 0) {
                                 block.setType(Material.AIR);
                                 p.sendMessage("§6ᴛᴜ ᴀs ᴘᴀʀғᴀɪᴛᴇᴍᴇɴᴛ ᴄʀᴏᴄʜᴇᴛᴇ́ ʟᴇ ᴄᴏғғʀᴇ !");
-                                Bukkit.getWorld("world").spawnParticle(Particle.WITCH, block.getLocation().add(0, 1, 0), 50, 0.5, 0.5, 0.5, 50);
+                                Objects.requireNonNull(Bukkit.getWorld("world")).spawnParticle(Particle.WITCH, block.getLocation().add(0, 1, 0), 50, 0.5, 0.5, 0.5, 50);
                                 p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
 
                                 cancel();
@@ -171,6 +173,7 @@ public class MListener implements Listener {
                         }
                         else{
                             manager.reward(p);
+                            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
                         }
                     }
                     else {
@@ -201,6 +204,7 @@ public class MListener implements Listener {
                     }
                     else {
                         p.sendMessage("§aBravo ! Tu as charger le canon !");
+                        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
                         manager.reward(p);
                     }
 
@@ -224,7 +228,7 @@ public class MListener implements Listener {
 
                     break;
 
-                case IRON_BLOCK:
+                case LIME_CONCRETE_POWDER:
                     if (manager.getRole(p) != MRoles.MECANO){
                         p.sendMessage("§cPAS TOUCHE ! Seul le mécano peut y toucher !");
                         return;
@@ -235,39 +239,78 @@ public class MListener implements Listener {
                         return;
                     }
 
-                    if (e.getItem().getType() != Material.PAPER){
+                    if (Objects.requireNonNull(e.getItem()).getType() != Material.PAPER){
                         p.sendMessage("§cTu as oublié ta clef !");
                         return;
                     }
 
-                    e.getClickedBlock().setType(Material.YELLOW_CONCRETE_POWDER);
-                    p.sendMessage("§aBravo, tu as réparé une panne !");
 
-                    //Todo: Réfléchir à comment les calculés ! peut être une liste
+                    new BukkitRunnable() {
+                        private int timer = 5;
 
+                        @Override
+                        public void run() {
+                            p.sendTitle("§aTu est entrain de réparer", "§aLa PANNE !", 10, 30, 10);
+                            p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, (5 - timer) * 0.2f + 1f);
+                            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 10, false, false, false));
+
+
+                            if (timer == 0){
+                                for (PotionEffect effect : p.getActivePotionEffects()) {
+                                    p.removePotionEffect(effect.getType());
+                                }
+                                e.getClickedBlock().setType(Material.YELLOW_CONCRETE_POWDER);
+
+                                int remainingPanne = 0;
+                                for (Location panne : Murder.getInstance().getPanne()){
+                                    if (panne.getBlock().getType() == Material.LIME_CONCRETE_POWDER){
+                                        remainingPanne ++;
+                                    }
+                                }
+
+                                if (remainingPanne == 0){
+                                    p.sendMessage("§aToutes les pannes ont été réparées !");
+                                    p.sendMessage("§7C'est le capitaine qui va être fier de toi !");
+
+                                    if (manager.getHasBuzzed().contains(p.getUniqueId())){
+                                        manager.getHasBuzzed().remove(p.getUniqueId());
+
+                                        p.sendMessage("§eBRAVO ! §aTu peux maintenant ré-utiliser le Buzzer !");
+                                        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+                                    }
+                                    else{
+                                        manager.reward(p);
+                                        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.BLOCKS, 1f, 1f);
+                                    }
+                                }
+                                else {
+                                    p.sendMessage("§aBien Joué, tu as réparé cette panne, plus que §e" + remainingPanne);
+                                }
+
+                                remainingPanne = 0;
+
+                            cancel();
+                            }
+                            timer--;
+                        }
+                    }.runTaskTimer(Murder.getInstance(), 0, 20L);
+                    break;
+
+                case CHERRY_BUTTON:
+                    e.setCancelled(true);
+                    manager.onJoin(p);
+
+                    break;
 
                 default:
                     break;
             }
-
-            if (block.getState() instanceof Sign sign){
-                String line1 = sign.getLine(0);
-                String line2 = sign.getLine(1);
-
-                if (line1.equalsIgnoreCase("Clique ici pour")){
-                    if (line2.equalsIgnoreCase("rejoindre le jeu")){
-                        manager.onJoin(p);
-                    }
-                }
-            }
         }
 
-
-
-        /**
-         * Écoute
-         * des
-         * Items
+        /*
+        Écoute
+        des
+        Items
          */
 
 
@@ -325,8 +368,8 @@ public class MListener implements Listener {
                             }
                         }.runTaskTimer(Murder.getInstance(), 0, 20L);
                     }
-
                 }
+                break;
 
             case AMETHYST_SHARD:
                 if (isInvis()) {
@@ -409,7 +452,7 @@ public class MListener implements Listener {
             if (e.getCurrentItem().getItemMeta() == null) return;
 
             SkullMeta meta = (SkullMeta) e.getCurrentItem().getItemMeta();
-            Player target = Bukkit.getPlayer(meta.getOwningPlayer().getName());
+            Player target = Bukkit.getPlayer(Objects.requireNonNull(Objects.requireNonNull(meta.getOwningPlayer()).getName()));
 
             if (target == null) return;
 
@@ -434,7 +477,7 @@ public class MListener implements Listener {
             if (e.getCurrentItem().getItemMeta() == null) return;
 
             SkullMeta meta = (SkullMeta) e.getCurrentItem().getItemMeta();
-            Player target = Bukkit.getPlayer(meta.getOwningPlayer().getName());
+            Player target = Bukkit.getPlayer(Objects.requireNonNull(Objects.requireNonNull(meta.getOwningPlayer()).getName()));
 
             if (target == null) return;
 
@@ -450,42 +493,49 @@ public class MListener implements Listener {
     }
 
     /**
-     *Les méthodes qui serviront pour les quêtes
+     * La méthode qui gère l'inventaire de la compo
      */
     @EventHandler
-    public void onBlockPlace(BlockPlaceEvent e) {
-        Player p = e.getPlayer();
-        Block placed = e.getBlockPlaced();
-        Block against = e.getBlockAgainst();
+    public void onCompoClick(InventoryClickEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (!e.getView().getTitle().equals("§8Composition des rôles")) return;
 
-        if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted()) return;
+        e.setCancelled(true);
 
-        if (e.getBlockPlaced().getType() != Material.LEVER) return;
-        if (e.getBlockAgainst().getType() != Material.IRON_BLOCK) return;
+        if (e.getCurrentItem() == null || e.getCurrentItem().getType() == Material.AIR) return;
 
-        BlockFace face = against.getFace(placed);
-        if (face.equals(BlockFace.EAST) || face.equals(BlockFace.WEST)){
+        String displayName = e.getCurrentItem().getItemMeta().getDisplayName();
 
-            if(p.getInventory().getItemInMainHand().getAmount() == 0){
-                p.sendMessage("§aBravo ! Tu as réparé(e) tous les Jetskis !");
+        // Retrouver le rôle cliqué par son nom
+        for (MRoles role : MRoles.values()) {
+            if (!role.getName().equals(displayName)) continue;
 
-                manager.reward(p);
-            }else {
-                p.sendMessage("§aTu vois le nombre de levier dans ton inventaire, c'est le nombre de levier à placer");
-                p.sendMessage("§7Allez au travail !");
+            List<MRoles> active = Murder.getInstance().getManager().getActiveRoles();
 
-                p.getInventory().getItemInMainHand().setAmount(p.getInventory().getItemInMainHand().getAmount() - 1);
+            if (active.contains(role)) {
+                active.remove(role);
+                p.sendMessage("§c✘ §f" + role.getName() + " §7désactivé");
+            } else {
+                active.add(role);
+                p.sendMessage("§a✔ §f" + role.getName() + " §7activé");
             }
+
+            p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.BLOCKS, 1f, 1f);
+            new CompoGUI(p).open(p);
+            break;
         }
     }
 
+    /**
+     *Les méthodes qui serviront pour les quêtes
+     */
     @EventHandler
     public void onCraft(CraftItemEvent e){
         Player p = (Player) e.getWhoClicked();
 
         if (!manager.getPls().contains(p.getUniqueId()) || !manager.isStarted() || manager.isReunion()) return;
 
-        ItemStack result = e.getRecipe() != null ? e.getRecipe().getResult() : null;
+        ItemStack result = e.getRecipe().getResult();
 
         if (isCustomItem(result, Murder.getInstance().getCustomItems().fruit())){
             if (manager.getRole(p) != MRoles.CUISINER){
@@ -518,9 +568,7 @@ public class MListener implements Listener {
         Player p = e.getPlayer();
         if (!(e.getRightClicked() instanceof ArmorStand as)) return;
 
-        if (manager.isReunion()){
-            return;
-        }
+        if (manager.isReunion() || !manager.isStarted()) return;
 
        String customName = as.getCustomName();
        if (customName == null) return;
@@ -717,9 +765,6 @@ public class MListener implements Listener {
     // Getters
     public boolean isKill() {
         return kill;
-    }
-    public List<UUID> getCooldown() {
-        return cooldown;
     }
     public boolean isCharm() {
         return charm;

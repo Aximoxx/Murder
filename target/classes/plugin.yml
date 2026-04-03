@@ -2,6 +2,7 @@ name: Murder
 version: '1.0'
 main: Aximox.murder.Murder
 api-version: '1.21'
+depend: [ ProtocolLib ]
 authors: [ Aximoxx ]
 commands:
   setrank:

@@ -67,6 +67,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>net.dmulloy2</groupId>
+      <artifactId>ProtocolLib</artifactId>
+      <version>5.4.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>com.mojang</groupId>
       <artifactId>authlib</artifactId>
       <version>1.5.21</version>

@@ -76,6 +76,18 @@ public final class Murder extends JavaPlugin {
         return moss;
     }
 
+    public List<Location> getPanne() {
+        List<Location> panne = new ArrayList<>();
+        int panneCount = Murder.getInstance().getConfig().getInt("murder.panneCount", 0);
+
+        for (int i = 1; i <= panneCount; i++) {
+            Location loc = (Location) Murder.getInstance().getConfig().get("murder.panne" + i);
+            if (loc != null) panne.add(loc);
+        }
+
+        return panne;
+    }
+
     public MManager getManager() {
         return manager;
     }

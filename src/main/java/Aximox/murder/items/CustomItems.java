@@ -12,17 +12,6 @@ public class CustomItems {
      * LES ITEMS QUI SONT DESTINEE AU QUÊTES
      */
 
-    public ItemStack lever (){
-        ItemStack lever = new ItemStack(Material.LEVER);
-        ItemMeta meta = lever.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName("§fGuidon");
-            meta.setLore(List.of("§7Peut seulement être poser sur un block de Fer"));
-            lever.setItemMeta(meta);
-        }
-        return lever;
-    }
-
     public ItemStack canon(){
         ItemStack canon = new ItemStack(Material.GUNPOWDER);
         ItemMeta meta = canon.getItemMeta();
@@ -65,6 +54,22 @@ public class CustomItems {
             prison.setItemMeta(prisonMeta);
         }
         return prison;
+    }
+
+    /**
+     * Item pour le rôle Mecano (Permet de réparer les pannes)
+     */
+
+    public ItemStack wrench(){
+        ItemStack wrench = new ItemStack(Material.PAPER);
+        ItemMeta wrenchMeta = wrench.getItemMeta();
+        if (wrenchMeta != null) {
+            wrenchMeta.setCustomModelData(23);
+            wrenchMeta.setDisplayName("§fLa clef à molette");
+            wrenchMeta.setLore(List.of("§7À utiliser sur les pannes !", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
+            wrench.setItemMeta(wrenchMeta);
+        }
+        return wrench;
     }
 
     /**

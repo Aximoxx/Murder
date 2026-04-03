@@ -1,6 +1,7 @@
 package Aximox.murder;
 
 import Aximox.murder.grade.MGrades;
+import Aximox.murder.gui.CompoGUI;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -105,12 +106,25 @@ public class MCommand implements CommandExecutor, TabCompleter {
                     Murder.getInstance().getManager().setMoss(p);
                     break;
 
+                case "setPanne":
+                    Murder.getInstance().getManager().setPanne(p);
+                    break;
+
                 case "setbuzz":
                     Murder.getInstance().getManager().setBuzzer(p);
                     break;
 
                 case "clearAS":
                     Murder.getInstance().getManager().resetDeathAS();
+                    break;
+
+                case "compo":
+                    if (Murder.getInstance().getManager().isStarted()){
+                        p.sendMessage("§cTu ne peux pas changer la compo pendant la partie !");
+                        return true;
+                    }
+
+                    new CompoGUI(p).open(p);
                     break;
 
                 case "give":
@@ -188,33 +202,48 @@ public class MCommand implements CommandExecutor, TabCompleter {
 
         else if (c.getName().equalsIgnoreCase("murder")) {
             if (args.length == 1) {
-                List<String> subs = Arrays.asList("help", "start", "stop", "setchest", "setbuzz", "clearAS");
+                List<String> subs = Arrays.asList("help", "start", "stop", "setchest", "setbuzz", "clearAS", "compo", "give");
                 return subs.stream()
                         .filter(sub -> sub.toLowerCase().startsWith(args[0].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
+                List<String> items = Arrays.asList("capitaine", "pirate", "sirene", "fruit", "canon", "sifflet", "bross");
+                return items.stream()
+                        .filter(item -> item.toLowerCase().startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
             }
         }
 
         return Collections.emptyList();
     }
-    
+
     private void sendHelp(Player p){
         p.sendMessage("§6§l=======§c+§6§l=======");
         p.sendMessage(" ");
-        p.sendMessage("§b/epreuve §fstart");
+        p.sendMessage("§b/murder §fstart");
         p.sendMessage("§7Cette commande sert à §adémarrer §7une partie !");
         p.sendMessage(" ");
-        p.sendMessage("§b/epreuve §fstop");
+        p.sendMessage("§b/murder §fstop");
         p.sendMessage("§7Cette commande sert à §4arrêter §7une partie !");
         p.sendMessage(" ");
-        p.sendMessage("§b/epreuve §fsetchest");
+        p.sendMessage("§b/murder §fsetchest");
         p.sendMessage("§7Cette commande sert à définir l'emplacement d'un §6coffre §7!");
         p.sendMessage(" ");
-        p.sendMessage("§b/epreuve §fsetbuzz");
+        p.sendMessage("§b/murder §fsetmoss");
+        p.sendMessage("§7Cette commande sert à définir l'emplacement d'une §asaleté §7!");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder §fsetpanne");
+        p.sendMessage("§7Cette commande sert à définir l'emplacement d'une §cpanne §7!");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder §fsetbuzz");
         p.sendMessage("§7Cette commande sert à définir l'emplacement du §cBuzzer §7!");
         p.sendMessage(" ");
-        p.sendMessage("§b/epreuve §fclearas");
+        p.sendMessage("§b/murder §fclearas");
         p.sendMessage("§7Cette commande sert à §csupprimer §7les hologrames des corps !");
+        p.sendMessage(" ");
+        p.sendMessage("§b/murder §fcompo");                                          // <--
+        p.sendMessage("§7Cette commande sert à §9modifier §7la composition des rôles !"); // <--
     }
 
     private void sendItemHelp(Player p){

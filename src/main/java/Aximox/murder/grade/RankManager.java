@@ -3,6 +3,7 @@ package Aximox.murder.grade;
 import Aximox.murder.Murder;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,14 +24,19 @@ public class RankManager {
 
     public void loadRanks() {
         File file = new File(Murder.getInstance().getDataFolder(), "ranks.yml");
-        if (!file.exists()) return;
+        if (!file.exists()) {
+            Murder.getInstance().getLogger().warning("ranks.yml introuvable !");
+            return;
+        }
 
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+        Murder.getInstance().getLogger().info("Clés trouvées : " + config.getKeys(false));
 
         for (String key : config.getKeys(false)) {
             UUID uuid = UUID.fromString(key);
             MGrades rank = MGrades.valueOf(config.getString(key));
             playerRanks.put(uuid, rank);
+            Murder.getInstance().getLogger().info("Chargé : " + uuid + " -> " + rank);
         }
     }
 
@@ -75,6 +81,10 @@ public class RankManager {
      */
     public void removeRank(UUID uuid) {
         playerRanks.remove(uuid);
+    }
+
+    public void loadRank(Player player) {
+        getRank(player.getUniqueId());
     }
 
     /**

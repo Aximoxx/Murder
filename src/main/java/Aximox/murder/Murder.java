@@ -1,15 +1,18 @@
 package Aximox.murder;
 
+import Aximox.murder.grade.MGrades;
 import Aximox.murder.grade.RankManager;
 import Aximox.murder.items.CustomCrafts;
 import Aximox.murder.items.CustomItems;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 public final class Murder extends JavaPlugin {
     private MManager manager;
@@ -19,6 +22,8 @@ public final class Murder extends JavaPlugin {
     private static Murder instance;
     private RankManager rankManager;
     private CustomItems customItems;
+
+    private static final List<UUID> listeMutes = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -40,6 +45,7 @@ public final class Murder extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(mListener, this);
         Objects.requireNonNull(getCommand("setrank")).setExecutor(mCommand);
         Objects.requireNonNull(getCommand("doc")).setExecutor(mCommand);
+        Objects.requireNonNull(getCommand("feed")).setExecutor(mCommand);
         Objects.requireNonNull(getCommand("murder")).setExecutor(mCommand);
     }
 
@@ -76,6 +82,18 @@ public final class Murder extends JavaPlugin {
         return moss;
     }
 
+    public List<Location> getSpawn() {
+        List<Location> spawn = new ArrayList<>();
+        int spawnCount = Murder.getInstance().getConfig().getInt("murder.spawnCount", 0);
+
+        for (int i = 1; i <= spawnCount; i++) {
+            Location loc = (Location) Murder.getInstance().getConfig().get("murder.spawn" + i);
+            if (loc != null) spawn.add(loc);
+        }
+
+        return spawn;
+    }
+
     public List<Location> getPanne() {
         List<Location> panne = new ArrayList<>();
         int panneCount = Murder.getInstance().getConfig().getInt("murder.panneCount", 0);
@@ -106,7 +124,11 @@ public final class Murder extends JavaPlugin {
     public RankManager getRankManager() {
         return rankManager;
     }
+    public static List<UUID> getListeMutes() {
+        return listeMutes;
+    }
     public void setmCommand(MCommand mCommand) {
         this.mCommand = mCommand;
     }
+    public MGrades getRank(Player player) { return getRankManager().getRank(player.getUniqueId()); }
 }

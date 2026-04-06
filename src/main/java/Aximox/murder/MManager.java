@@ -9,10 +9,12 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import java.util.*;
@@ -25,6 +27,7 @@ public class MManager {
 
     private boolean started;
     private boolean reunion;
+    private boolean isMuteOn;
     private String murderName     = "§c⚔️ Inconnu";
     private String lastMurderName = "§c⚔️ Inconnu";
 
@@ -92,8 +95,12 @@ public class MManager {
             }
         }
 
-        getPls().add(p.getUniqueId());
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            updateTabList(online);
+        }
+
         p.getInventory().clear();
+        getPls().add(p.getUniqueId());
         p.sendMessage(getMurder() + "§eᴇ̂ᴛᴇs ᴠᴏᴜs ᴘʀᴇ̂ᴛ ᴀ̀ ᴍᴀsᴛᴇʀᴍɪɴᴅᴇʀ ᴛᴏᴜᴛ ʟᴇ ᴍᴏɴᴅᴇ ?");
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
     }
@@ -142,7 +149,11 @@ public class MManager {
                         if (pl == null) continue;
                         pl.sendMessage(getMurder() + "§aʟᴀ ᴘᴀʀᴛɪᴇ ᴅᴇ́ᴍᴀʀʀᴇ ᴅᴀɴs §e" + timer + "§as !");
                         pl.playSound(pl.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
-                        if (timer == 1) pl.teleport(new Location(pl.getWorld(), 22, 16, 81));
+                        if (timer == 1){
+                            List<Location> spawns = Murder.getInstance().getSpawn();
+                            Location rSpawns = spawns.get(new Random().nextInt(spawns.size()));
+                            pl.teleport(Objects.requireNonNullElseGet(rSpawns, () -> new Location(pl.getWorld(), 22, 16, 81)));
+                        }
                     }
                     timer--;
                     return;
@@ -185,12 +196,20 @@ public class MManager {
 
                 for (Team team : Objects.requireNonNull(Bukkit.getScoreboardManager()).getMainScoreboard().getTeams())
                     team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.ALWAYS);
+
+                roleMap.forEach((uuid, role) -> {
+                    Player player = Bukkit.getPlayer(uuid);
+                    String nom = player != null ? player.getName() : "Joueur inconnu";
+                    Bukkit.broadcastMessage("§e" + nom + " §6était " + role.getName());
+                });
+
                 for (UUID id : savePls) {
                     Player pl = Bukkit.getPlayer(id);
-                    if (pl == null) continue;
-                    pl.getInventory().clear();
-                    pl.setGameMode(GameMode.SURVIVAL);
-                    pl.teleport(new Location(Bukkit.getWorld("world"), -47, 58, -278, 0f, 0f));
+                    if (pl != null) {
+                        pl.getInventory().clear();
+                        pl.setGameMode(GameMode.SURVIVAL);
+                        pl.teleport(new Location(Bukkit.getWorld("world"), -47, 58, -278, 0f, 0f));
+                    }
                 }
                 reset();
                 cancel();
@@ -222,6 +241,7 @@ public class MManager {
 
     /** Gère les kills durant la partie. */
     public void onKill(Player p, Player v) {
+        /**
         for (UUID id : getPls()) {
             Player pl = Bukkit.getPlayer(id);
             if (pl == null) continue;
@@ -233,6 +253,7 @@ public class MManager {
             pl.sendMessage(" ");
             pl.playSound(pl.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, SoundCategory.BLOCKS, 1f, 1f);
         }
+         */
 
         if (murderP.contains(v.getUniqueId())) {
             lastMurderName = v.getName();
@@ -245,7 +266,6 @@ public class MManager {
         if (getRole(v) == MRoles.FANTOME) {
             applyFantomeDeath(v);
         } else {
-            roleMap.remove(v.getUniqueId());
             v.setGameMode(GameMode.SPECTATOR);
             p.sendMessage(getMurder() + "§e ᴠᴏᴜs ᴀᴠᴇᴢ ᴇ́ʟɪᴍɪɴᴇ́(ᴇ) §6" + v.getName());
             morts.add(setCorps(v));
@@ -270,6 +290,7 @@ public class MManager {
             roleMap.remove(v.getUniqueId());
             v.setGameMode(GameMode.SPECTATOR);
             death.add(v.getUniqueId());
+            resetDeathAS();
             checkWin();
         }
     }
@@ -338,7 +359,9 @@ public class MManager {
         roleList.add(MRoles.PIRATE_FOU);
 
         List<MRoles> pool = new ArrayList<>(activeRoles);
+        Bukkit.getLogger().info("Pool avant shuffle : " + pool);
         Collections.shuffle(pool);
+        Bukkit.getLogger().info("RoleList finale : " + roleList);
 
         for (int i = 2; i < pls.size(); i++) {
             int extraIndex = i - 2;
@@ -508,6 +531,10 @@ public class MManager {
     public void reward(Player p) {
         p.getInventory().clear();
 
+        for (Player pl : Bukkit.getOnlinePlayers()) {
+            pl.hidePlayer(Murder.getInstance(), p);
+        }
+
         new BukkitRunnable() {
             private int timer = 30;
 
@@ -515,11 +542,13 @@ public class MManager {
             public void run() {
                 if (timer == 0 || isReunion()) {
                     p.sendMessage("§cVotre invisibilitée est terminée");
-                    for (Player pl : Bukkit.getOnlinePlayers()) pl.showPlayer(Murder.getInstance(), p);
+                    for (Player pl : Bukkit.getOnlinePlayers()) {
+                        pl.showPlayer(Murder.getInstance(), p);
+                    }
                     cancel();
                     return;
                 }
-                for (Player pl : Bukkit.getOnlinePlayers()) pl.hidePlayer(Murder.getInstance(), p);
+
                 ActionBar.send(p, "§aVous êtes invisible pendant encore: §e" + timer + "§a secondes !");
                 timer--;
             }
@@ -578,6 +607,15 @@ public class MManager {
         p.sendMessage("§aLa panne §b#" + panne + " §aà bien été ajouté en §bx: §f" + p.getLocation().getBlockX() + "§f, §by: §f" + p.getLocation().getBlockY() + "§f, §bz: §f" + p.getLocation().getBlockZ());
     }
 
+    public void setSpawn(Player p) {
+        if (!p.getWorld().equals(Bukkit.getWorld("world"))) return;
+        int spawn = Murder.getInstance().getConfig().getInt("murder.spawnCount", 0) + 1;
+        Murder.getInstance().getConfig().set("murder.spawnCount", spawn);
+        Murder.getInstance().getConfig().set("murder.spawn" + spawn, p.getLocation());
+        Murder.getInstance().saveConfig();
+        p.sendMessage("§aLe point de spawn §b#" + spawn + " §aà bien été ajouté en §bx: §f" + p.getLocation().getBlockX() + "§f, §by: §f" + p.getLocation().getBlockY() + "§f, §bz: §f" + p.getLocation().getBlockZ());
+    }
+
     // ============================================================
     //  ARMOR STANDS
     // ============================================================
@@ -588,6 +626,15 @@ public class MManager {
         as.setGravity(false);
         as.setSmall(true);
         as.setCustomName("§c§lʙᴜᴢᴢᴇʀ ᴅ'ᴜʀɢᴇɴᴄᴇ");
+        as.setCustomNameVisible(true);
+    }
+
+    public void setRejoin(Player p) {
+        ArmorStand as = p.getWorld().spawn(p.getLocation(), ArmorStand.class);
+        as.setVisible(false);
+        as.setGravity(false);
+        as.setSmall(true);
+        as.setCustomName("§a§lʀᴇᴊᴏɪɴᴅʀᴇ ʟᴀ ᴘᴀʀᴛɪᴇ");
         as.setCustomNameVisible(true);
     }
 
@@ -701,14 +748,42 @@ public class MManager {
     // ============================================================
 
     public void updateTabList(Player p) {
-        MGrades rank     = Murder.getInstance().getRankManager().getRank(p.getUniqueId());
-        String teamName  = String.format("%02d_%s", 10 - rank.getPower(), rank.name());
-        Team team        = p.getScoreboard().getTeam(teamName);
-        if (team == null) team = p.getScoreboard().registerNewTeam(teamName);
-        team.setPrefix(rank.getPrefix());
-        team.addEntry(p.getName());
+        MGrades rank    = Murder.getInstance().getRankManager().getRank(p.getUniqueId());
+        String teamName = String.format("%02d_%s", 10 - rank.getPower(), rank.name());
+
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            Scoreboard sb = online.getScoreboard();
+
+            // Retirer le joueur de toutes les anciennes teams
+            for (Team t : sb.getTeams()) {
+                t.removeEntry(p.getName());
+            }
+
+            Team team = sb.getTeam(teamName);
+            if (team == null) team = sb.registerNewTeam(teamName);
+            team.setPrefix(rank.getPrefix());
+            team.addEntry(p.getName());
+        }
+
         p.setPlayerListName(rank.getPrefix() + p.getName());
     }
+
+    // ============================================================
+    //  VOICE CHAT
+    // ============================================================
+
+    public void setMuteOn(boolean mute) {
+        this.isMuteOn = mute;
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (Murder.getInstance().getRank(player).hasPower(MGrades.HOST)) continue;
+
+            PermissionAttachment attachment = player.addAttachment(Murder.getInstance());
+
+            attachment.setPermission("voicechat.speak", !mute);
+            attachment.setPermission("voicechat.listen", !mute);
+        }
+    }
+
 
     // ============================================================
     //  GETTERS
@@ -729,6 +804,7 @@ public class MManager {
     public HashMap<UUID, UUID> getVotes()   { return votes; }
     public Map<UUID, MRoles> getRoleMap()   { return roleMap; }
     public RankManager getRankManager()     { return rankManager; }
+    public boolean isMuteOn()               { return isMuteOn; }
     public MRoles getRole(Player p)         { return roleMap.getOrDefault(p.getUniqueId(), MRoles.PASSAGER); }
 
     // ============================================================

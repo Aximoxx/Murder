@@ -2,12 +2,14 @@ name: Murder
 version: '1.0'
 main: Aximox.murder.Murder
 api-version: '1.21'
-depend: [ ProtocolLib ]
 authors: [ Aximoxx ]
 commands:
   setrank:
     description: Défini le status des joueurs.
   murder:
     description: fait toute les commandes du murder
+    aliases: [m]
   doc:
     description: donne le doc
+  feed:
+    description: nourrit.

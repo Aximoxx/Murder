@@ -22,6 +22,10 @@ public enum MGrades {
         return power;
     }
 
+    public boolean hasPower(MGrades required) {
+        return this.power >= required.getPower();
+    }
+
     public static MGrades getByName(String name) {
         for (MGrades rank : values()) {
             if (rank.name().equalsIgnoreCase(name)) {

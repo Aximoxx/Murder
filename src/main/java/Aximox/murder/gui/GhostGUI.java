@@ -18,25 +18,27 @@ public class GhostGUI extends FastInv {
     public GhostGUI(Player p) {
         super(36, "§8ᴊᴏᴜᴇᴜʀ ᴀ̀ ʜᴀɴᴛᴇʀ");
 
-        for (Player pls : Bukkit.getOnlinePlayers()){
-            if (Murder.getInstance().getManager().getPls().contains(pls.getUniqueId())) {
-                if (Murder.getInstance().getManager().getDeath().contains(pls.getUniqueId())) return;
+        for (Player pls : Bukkit.getOnlinePlayers()) {
+            if (!Murder.getInstance().getManager().getPls().contains(pls.getUniqueId())) continue;
+            if (Murder.getInstance().getManager().getDeath().contains(pls.getUniqueId())) continue;
+            if (pls.getUniqueId().equals(p.getUniqueId())) continue;
 
-                alive.add(pls.getUniqueId());
-                alive.remove(p.getUniqueId());
+            alive.add(pls.getUniqueId());
+        }
 
-                ItemStack item = new ItemStack(Material.PLAYER_HEAD);
-                SkullMeta meta = (SkullMeta) item.getItemMeta();
-                if (meta != null) {
-                    meta.setOwner(pls.getName());
-                    meta.setDisplayName(pls.getName());
-                    item.setItemMeta(meta);
-                }
+        // Placer les têtes après avoir rempli la liste
+        for (int i = 0; i < alive.size(); i++) {
+            Player target = Bukkit.getPlayer(alive.get(i));
+            if (target == null) continue;
 
-                for (int i = 0; i < alive.size() ; i++){
-                    setItem(i, item);
-                }
+            ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+            SkullMeta meta = (SkullMeta) item.getItemMeta();
+            if (meta != null) {
+                meta.setOwner(target.getName());
+                meta.setDisplayName(target.getName());
+                item.setItemMeta(meta);
             }
+            setItem(i, item);
         }
     }
 }

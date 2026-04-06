@@ -2,6 +2,7 @@ package Aximox.murder;
 
 import Aximox.murder.grade.MGrades;
 import Aximox.murder.gui.CompoGUI;
+import Aximox.murder.utils.ActionBar;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -14,9 +15,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MCommand implements CommandExecutor, TabCompleter {
@@ -36,45 +35,39 @@ public class MCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (c.getName().equalsIgnoreCase("feed")){
+            p.setFoodLevel(20);
+            p.sendMessage("§aTu est maintenant calé(e) !");
+            return true;
+        }
+
         if (!p.isOp()){
             p.sendMessage("§cTu n'as pas le bon rôle, bozo le clown");
             return true;
         }
 
         if (c.getName().equalsIgnoreCase("setrank")) {
-            MGrades playerRank = Murder.getInstance().getManager().getRankManager().getRank(p.getUniqueId());
-
             if (args.length < 2) {
-                p.sendMessage(Murder.getInstance().getManager().getMurder() + "§cUtilisation: /setrank <joueur> <rang>");
+                p.sendMessage("§cUsage : /setrank <joueur> <grade>");
                 return true;
             }
 
             Player target = Bukkit.getPlayer(args[0]);
             if (target == null) {
-                p.sendMessage(Murder.getInstance().getManager().getMurder() + "§cCe joueur n'existe pas ou n'est pas en ligne.");
+                p.sendMessage("§cCe joueur n'est pas connecté.");
                 return true;
             }
 
             MGrades newRank = MGrades.getByName(args[1]);
-            if (newRank == null) {
-                p.sendMessage(Murder.getInstance().getManager().getMurder() + "§cCe rang n'existe pas !");
-                return true;
-            }
 
-            if (newRank.getPower() >= playerRank.getPower() && !p.isOp()) {
-                p.sendMessage(Murder.getInstance().getManager().getMurder() + "§cVous ne pouvez pas donner un rang supérieur au vôtre !");
-                return true;
-            }
+            Murder.getInstance().getRankManager().setRank(target.getUniqueId(), newRank);
 
-            Murder.getInstance().getManager().getRankManager().setRank(target.getUniqueId(), newRank);
+            p.sendMessage("§a§lSUCCÈS §8| §fLe grade de §e" + target.getName() + " §fest maintenant " + newRank.getPrefix());
+            target.sendMessage("§a§lINFO §8| §fTon grade a été mis à jour : " + newRank.getPrefix());
 
-            p.sendMessage("§a§lSUCCÈS §8| §fLe statut de §e" + target.getName() + " §fest maintenant " + newRank.getPrefix());
-            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 1f, 1f);
+            Murder.getInstance().getRankManager().loadRank(target);
+            Murder.getInstance().getManager().updateTabList(target);
 
-            target.sendMessage("§a§lINFO §8| §fTon statut a été mis à jour : " + newRank.getPrefix());
-            target.playSound(target.getLocation(), Sound.ENTITY_WITCH_CELEBRATE, SoundCategory.BLOCKS, 1f, 1f);
-
-            for (Player pls : Bukkit.getOnlinePlayers()) Murder.getInstance().getManager().updateTabList(pls);
             return true;
         }
 
@@ -88,6 +81,26 @@ public class MCommand implements CommandExecutor, TabCompleter {
 
                 case "help":
                     sendHelp(p);
+                    break;
+
+                case "mute":
+                    Murder.getInstance().getManager().setMuteOn(!Murder.getInstance().getManager().isMuteOn());
+
+                    if (Murder.getInstance().getManager().isMuteOn()) {
+                        for (Player pls : Bukkit.getOnlinePlayers()) {
+                            if (!Murder.getInstance().getRank(pls).hasPower(MGrades.HOST)) {
+                                Murder.getListeMutes().add(pls.getUniqueId());
+                                ActionBar.start(Murder.getInstance(), pls, "§cVous êtes §4§lMUETS §c!");
+                            }
+                        }
+                        p.sendTitle("§6Une annonce est entrain de se faire", "§eÉcouter attentivement", 10, 30, 10);
+                    } else {
+                        Murder.getListeMutes().clear();
+                        Bukkit.getOnlinePlayers().forEach(pls -> {
+                            ActionBar.stop(pls);
+                            pls.sendMessage("§aVous avez retrouvé l'usage de la parole.");
+                        });
+                    }
                     break;
 
                 case "start":
@@ -112,6 +125,21 @@ public class MCommand implements CommandExecutor, TabCompleter {
 
                 case "setbuzz":
                     Murder.getInstance().getManager().setBuzzer(p);
+                    break;
+
+                case "setrejoin":
+                    Murder.getInstance().getManager().setRejoin(p);
+                    break;
+
+                case "setspawn":
+                    Murder.getInstance().getManager().setSpawn(p);
+                    break;
+
+                case "reveal":
+                    for (Player viewer : Bukkit.getOnlinePlayers()) {
+                        viewer.showPlayer(Murder.getInstance(), p);
+                    }
+                    p.sendMessage("§aTu es de nouveau visible !");
                     break;
 
                 case "clearAS":
@@ -162,6 +190,10 @@ public class MCommand implements CommandExecutor, TabCompleter {
                             p.getInventory().addItem(Murder.getInstance().getCustomItems().bross());
                             break;
 
+                        case "wrench":
+                            p.getInventory().addItem(Murder.getInstance().getCustomItems().wrench());
+                            break;
+
                         default:
                             sendItemHelp(p);
                             break;
@@ -202,7 +234,7 @@ public class MCommand implements CommandExecutor, TabCompleter {
 
         else if (c.getName().equalsIgnoreCase("murder")) {
             if (args.length == 1) {
-                List<String> subs = Arrays.asList("help", "start", "stop", "setchest", "setbuzz", "clearAS", "compo", "give");
+                List<String> subs = Arrays.asList("help", "start", "stop", "setchest", "setbuzz", "setspawn", "clearAS", "compo", "give");
                 return subs.stream()
                         .filter(sub -> sub.toLowerCase().startsWith(args[0].toLowerCase()))
                         .collect(Collectors.toList());
@@ -270,4 +302,6 @@ public class MCommand implements CommandExecutor, TabCompleter {
         p.sendMessage("§b/murder give §fcanon");
         p.sendMessage("§7Cette commande sert à give l'item du §cCanonnier !");
     }
+
+
 }

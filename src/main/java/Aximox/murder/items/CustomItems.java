@@ -1,6 +1,7 @@
 package Aximox.murder.items;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -64,7 +65,7 @@ public class CustomItems {
         ItemStack wrench = new ItemStack(Material.PAPER);
         ItemMeta wrenchMeta = wrench.getItemMeta();
         if (wrenchMeta != null) {
-            wrenchMeta.setCustomModelData(23);
+            wrenchMeta.setCustomModelData(25);
             wrenchMeta.setDisplayName("§fLa clef à molette");
             wrenchMeta.setLore(List.of("§7À utiliser sur les pannes !", "§7ᴜsᴀɢᴇ §8| §fᴄʟɪǫᴜᴇ ᴅʀᴏɪᴛ"));
             wrench.setItemMeta(wrenchMeta);
@@ -103,6 +104,17 @@ public class CustomItems {
             voice.setItemMeta(vmeta);
         }
         return voice;
+    }
+
+    public ItemStack reward(){
+        ItemStack reward = new ItemStack(Material.LEVER);
+        ItemMeta rewardMeta = reward.getItemMeta();
+        if (rewardMeta != null) {
+            rewardMeta.setDisplayName("§aRécompense de Quête");
+            rewardMeta.setEnchantmentGlintOverride(true);
+            reward.setItemMeta(rewardMeta);
+        }
+        return reward;
     }
 
     /**
